@@ -64,6 +64,22 @@ document.addEventListener('DOMContentLoaded', function() {
     
     // Add click handlers to image options
     setupImageClickHandlers();
+    
+    // Setup info button click handler
+    const infoButton = document.getElementById('info-button');
+    if (infoButton) {
+        infoButton.addEventListener('click', showInfoPopup);
+    }
+    
+    // Setup popup overlay click handler (close on click outside)
+    const popupOverlay = document.getElementById('popup-overlay');
+    if (popupOverlay) {
+        popupOverlay.addEventListener('click', function(event) {
+            if (event.target === popupOverlay) {
+                closeInfoPopup();
+            }
+        });
+    }
 });
 
 // Function to setup click handlers on images
@@ -413,5 +429,59 @@ function createWhitePlaceholder() {
     ctx.fillStyle = 'white';
     ctx.fillRect(0, 0, 1, 1);
     return canvas.toDataURL();
+}
+
+// Function to get full quote data by id
+function getFullQuoteData(id) {
+    // Search in politics quotes
+    const politicsMatch = politicsQuotes.find(q => q.id === id);
+    if (politicsMatch) {
+        return politicsMatch;
+    }
+    
+    // Search in pop culture quotes  
+    const popCultureMatch = popCultureQuotes.find(q => {
+        const nom = q.nom || '';
+        const prenom = q.prenom || '';
+        const generatedId = (prenom + nom).toLowerCase().replace(/\s+/g, '');
+        return generatedId === id;
+    });
+    
+    return popCultureMatch || null;
+}
+
+// Function to show info popup
+function showInfoPopup() {
+    const quoteData = getFullQuoteData(currentQuestion.correctId);
+    
+    if (!quoteData) return;
+    
+    // Populate popup content
+    document.getElementById('popup-quote').textContent = quoteData.citation_courte || quoteData.contexte_complet || '';
+    
+    const prenom = quoteData.prenom || '';
+    const nom = quoteData.nom || '';
+    document.getElementById('popup-author').textContent = nom ? `${prenom} ${nom}` : prenom;
+    
+    document.getElementById('popup-date').textContent = quoteData.date || 'Non renseignée';
+    
+    document.getElementById('popup-context').textContent = quoteData.contexte_complet || 'Non renseigné';
+    
+    const link = quoteData.source_url || quoteData.source || '#';
+    const linkElement = document.getElementById('popup-link');
+    linkElement.href = link;
+    if (link === '#') {
+        linkElement.style.display = 'none';
+    } else {
+        linkElement.style.display = 'inline';
+    }
+    
+    // Show popup
+    document.getElementById('popup-overlay').style.display = 'flex';
+}
+
+// Function to close info popup
+function closeInfoPopup() {
+    document.getElementById('popup-overlay').style.display = 'none';
 }
 

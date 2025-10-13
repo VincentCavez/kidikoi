@@ -35,6 +35,19 @@
                 <button class="info-button" id="info-button" style="display: none;">+ d'infos</button>
             </div>
             
+            <!-- Info Popup -->
+            <div class="popup-overlay" id="popup-overlay" style="display: none;">
+                <div class="popup-box" id="popup-box">
+                    <div class="popup-content">
+                        <p><strong>Citation :</strong> <span id="popup-quote"></span></p>
+                        <p><strong>Auteur :</strong> <span id="popup-author"></span></p>
+                        <p><strong>Date :</strong> <span id="popup-date"></span></p>
+                        <p><strong>Contexte :</strong> <span id="popup-context"></span></p>
+                        <p><strong>Lien :</strong> <a id="popup-link" href="#" target="_blank" rel="noopener noreferrer">Source</a></p>
+                    </div>
+                </div>
+            </div>
+            
             <div class="images-grid">
                 <div class="image-option" data-index="0">
                     <img src="" alt="Option 1" id="img-0">
@@ -60,22 +73,28 @@
 
     <div id="game2-page" class="page">
         <div class="container">
-            <button class="back-button">← Home</button>
-            <h2>Jeu 2</h2>
+            <div class="header-row">
+                <button class="back-button">← Home</button>
+                <h2 class="game-title">Jeu 2</h2>
+            </div>
         </div>
     </div>
 
     <div id="game3-page" class="page">
         <div class="container">
-            <button class="back-button">← Home</button>
-            <h2>Jeu 3</h2>
+            <div class="header-row">
+                <button class="back-button">← Home</button>
+                <h2 class="game-title">Jeu 3</h2>
+            </div>
         </div>
     </div>
 
     <div id="game4-page" class="page">
         <div class="container">
-            <button class="back-button">← Home</button>
-            <h2>Jeu 4</h2>
+            <div class="header-row">
+                <button class="back-button">← Home</button>
+                <h2 class="game-title">Jeu 4</h2>
+            </div>
         </div>
     </div>
 

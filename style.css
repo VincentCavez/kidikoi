@@ -185,6 +185,61 @@ body {
     transform: translateY(-2px);
 }
 
+/* Popup Overlay */
+.popup-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.7);
+    z-index: 1000;
+    display: flex;
+    align-items: flex-start;
+    justify-content: center;
+    padding-top: 25vh;
+}
+
+.popup-box {
+    background: linear-gradient(135deg, #2A4D56 0%, #1E3940 100%);
+    border: 2px solid #3A6D76;
+    border-radius: 20px;
+    padding: 30px;
+    box-shadow: 0 8px 20px rgba(0, 0, 0, 0.3);
+    max-width: 400px;
+    width: calc(100% - 40px);
+    min-height: 150px;
+    max-height: 50vh;
+    overflow-y: auto;
+    position: relative;
+}
+
+.popup-content {
+    color: white;
+}
+
+.popup-content p {
+    margin-bottom: 15px;
+    line-height: 1.6;
+    font-size: 0.95rem;
+}
+
+.popup-content strong {
+    color: #B8C5CB;
+}
+
+.popup-content a {
+    color: #51cb00;
+    text-decoration: none;
+    border-bottom: 1px solid #51cb00;
+    transition: all 0.3s ease;
+}
+
+.popup-content a:hover {
+    color: #6ee600;
+    border-bottom-color: #6ee600;
+}
+
 /* Images Grid */
 .images-grid {
     display: grid;
