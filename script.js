@@ -9,6 +9,11 @@ let currentQuestion = {
     allIds: [] // Array of 4 ids including the correct one
 };
 
+// Timer variables
+let timerInterval = null;
+let timerStartTime = null;
+const TIMER_DURATION = 15000; // 15 seconds in milliseconds
+
 // Navigation between pages
 document.addEventListener('DOMContentLoaded', function() {
     // Get all main buttons
@@ -35,6 +40,9 @@ document.addEventListener('DOMContentLoaded', function() {
         // If going to game 1, load a quote
         if (pageId === 'game1-page') {
             loadRandomQuote();
+        } else {
+            // Stop timer if leaving game 1
+            stopTimer();
         }
     }
 
@@ -60,6 +68,16 @@ document.addEventListener('DOMContentLoaded', function() {
     const nextQuoteBtn = document.getElementById('next-quote-btn');
     if (nextQuoteBtn) {
         nextQuoteBtn.addEventListener('click', loadRandomQuote);
+    }
+    
+    // Event listener for click blocker - to continue to next question
+    const clickBlocker = document.getElementById('click-blocker');
+    if (clickBlocker) {
+        clickBlocker.addEventListener('click', function() {
+            if (this.classList.contains('clickable')) {
+                loadRandomQuote();
+            }
+        });
     }
     
     // Add click handlers to image options
@@ -101,13 +119,22 @@ function handleImageClick(event) {
         return;
     }
     
+    // Stop timer
+    stopTimer();
+    
+    // Show click blocker to disable all clicks
+    showClickBlocker(false);
+    
     // Disable all options
     const allOptions = document.querySelectorAll('.image-option');
     allOptions.forEach(opt => opt.classList.add('disabled'));
     
+    let resultMessage = '';
+    
     if (clickedId === currentQuestion.correctId) {
         // Correct answer
         clickedOption.classList.add('correct');
+        resultMessage = 'Bonne réponse !';
         
         // Fade other options
         allOptions.forEach((opt, index) => {
@@ -118,23 +145,38 @@ function handleImageClick(event) {
     } else {
         // Incorrect answer
         clickedOption.classList.add('incorrect');
+        resultMessage = 'Mauvaise réponse !';
         
-        // Find and highlight the correct answer
+        // Find and highlight the correct answer (only border, no background change on name-label)
         allOptions.forEach((opt, index) => {
             const optId = currentQuestion.allIds[index];
             if (optId === currentQuestion.correctId) {
-                opt.classList.add('correct');
+                // Add only the border styling, not the full "correct" class
+                opt.style.borderColor = '#51cb00';
+                opt.style.borderWidth = '5px';
             } else if (index !== clickedIndex) {
                 opt.classList.add('faded');
             }
         });
     }
     
-    // Show info button
-    const infoButton = document.getElementById('info-button');
-    if (infoButton) {
-        infoButton.style.display = 'block';
-    }
+    // Show result message in timer area
+    const isCorrect = clickedId === currentQuestion.correctId;
+    showResultInTimer(resultMessage, isCorrect);
+    
+    // Show info button and continue text after 1.5 seconds
+    setTimeout(() => {
+        const infoButton = document.getElementById('info-button');
+        if (infoButton) {
+            infoButton.style.display = 'block';
+        }
+        
+        // Show "Appuyez pour continuer" text
+        showContinueText();
+        
+        // Make click blocker clickable to continue
+        showClickBlocker(true);
+    }, 1500);
 }
 
 // Function to parse CSV
@@ -328,12 +370,196 @@ function resetImageOptions() {
     const allOptions = document.querySelectorAll('.image-option');
     allOptions.forEach(opt => {
         opt.classList.remove('correct', 'incorrect', 'faded', 'disabled');
+        // Reset inline styles
+        opt.style.borderColor = '';
+        opt.style.borderWidth = '';
     });
     
     // Hide info button
     const infoButton = document.getElementById('info-button');
     if (infoButton) {
         infoButton.style.display = 'none';
+    }
+    
+    // Hide click blocker
+    hideClickBlocker();
+    
+    // Reset timer
+    resetTimer();
+    startTimer();
+}
+
+// Function to start the timer
+function startTimer() {
+    const timerBar = document.getElementById('timer-bar');
+    const timerText = document.getElementById('timer-text');
+    
+    if (!timerBar) return;
+    
+    // Reset and show timer bar
+    timerBar.style.width = '100%';
+    timerBar.style.backgroundColor = '#51cb00'; // Start with green
+    timerBar.style.display = 'block';
+    timerText.style.display = 'none';
+    
+    timerStartTime = Date.now();
+    
+    timerInterval = setInterval(() => {
+        const elapsed = Date.now() - timerStartTime;
+        const remaining = Math.max(0, TIMER_DURATION - elapsed);
+        const percentage = (remaining / TIMER_DURATION) * 100;
+        
+        timerBar.style.width = percentage + '%';
+        
+        // Calculate color transition from green to red
+        // percentage: 100% = green (#51cb00), 0% = red (#ff0000)
+        const ratio = percentage / 100;
+        const red = Math.round(81 + (255 - 81) * (1 - ratio)); // 51 to FF
+        const green = Math.round(203 * ratio); // CB to 00
+        const blue = 0; // Always 00
+        
+        timerBar.style.backgroundColor = `rgb(${red}, ${green}, ${blue})`;
+        
+        if (remaining <= 0) {
+            handleTimerEnd();
+        }
+    }, 100);
+}
+
+// Function to stop the timer
+function stopTimer() {
+    if (timerInterval) {
+        clearInterval(timerInterval);
+        timerInterval = null;
+    }
+}
+
+// Function to reset the timer
+function resetTimer() {
+    stopTimer();
+    const timerBar = document.getElementById('timer-bar');
+    const timerText = document.getElementById('timer-text');
+    
+    if (timerBar) {
+        timerBar.style.width = '100%';
+        timerBar.style.backgroundColor = '#51cb00'; // Reset to green
+        timerBar.style.display = 'block';
+    }
+    
+    if (timerText) {
+        timerText.style.display = 'none';
+    }
+}
+
+// Function to show continue text
+function showContinueText() {
+    const timerBar = document.getElementById('timer-bar');
+    const timerText = document.getElementById('timer-text');
+    
+    if (timerBar) {
+        timerBar.style.display = 'none';
+    }
+    
+    if (timerText) {
+        timerText.textContent = 'Appuyez pour continuer';
+        timerText.style.display = 'block';
+        timerText.style.cursor = 'pointer';
+        // Remove result color classes and force white color
+        timerText.classList.remove('correct-result', 'incorrect-result');
+        timerText.style.color = 'white';
+    }
+}
+
+// Function to handle timer end (no answer clicked)
+function handleTimerEnd() {
+    stopTimer();
+    
+    // Show click blocker to disable all clicks
+    showClickBlocker(false);
+    
+    // Disable all options
+    const allOptions = document.querySelectorAll('.image-option');
+    allOptions.forEach(opt => opt.classList.add('disabled'));
+    
+    // Find and highlight the correct answer (only border, no background change on name-label)
+    allOptions.forEach((opt, index) => {
+        const optId = currentQuestion.allIds[index];
+        if (optId === currentQuestion.correctId) {
+            // Add only the border styling, not the full "correct" class
+            opt.style.borderColor = '#51cb00';
+            opt.style.borderWidth = '5px';
+        } else {
+            opt.classList.add('faded');
+        }
+    });
+    
+    // Show result message in timer area
+    showResultInTimer('Temps écoulé !', false);
+    
+    // Show info button and continue text after 1.5 seconds
+    setTimeout(() => {
+        const infoButton = document.getElementById('info-button');
+        if (infoButton) {
+            infoButton.style.display = 'block';
+        }
+        
+        // Show continue text
+        showContinueText();
+        
+        // Make click blocker clickable to continue
+        showClickBlocker(true);
+    }, 1500);
+}
+
+// Function to show result in timer area
+function showResultInTimer(message, isCorrect) {
+    const timerBar = document.getElementById('timer-bar');
+    const timerText = document.getElementById('timer-text');
+    
+    if (!timerText) return;
+    
+    // Hide timer bar
+    if (timerBar) {
+        timerBar.style.display = 'none';
+    }
+    
+    // Show result message
+    timerText.textContent = message;
+    timerText.style.display = 'block';
+    timerText.style.cursor = 'default';
+    
+    // Apply color based on result
+    timerText.classList.remove('correct-result', 'incorrect-result');
+    if (isCorrect) {
+        timerText.classList.add('correct-result');
+    } else {
+        timerText.classList.add('incorrect-result');
+    }
+}
+
+// Function to show/hide click blocker
+function showClickBlocker(clickable) {
+    const clickBlocker = document.getElementById('click-blocker');
+    if (!clickBlocker) return;
+    
+    if (clickable) {
+        clickBlocker.style.display = 'block';
+        clickBlocker.classList.add('clickable');
+    } else if (clickable === false) {
+        clickBlocker.style.display = 'block';
+        clickBlocker.classList.remove('clickable');
+    } else {
+        clickBlocker.style.display = 'none';
+        clickBlocker.classList.remove('clickable');
+    }
+}
+
+// Function to hide click blocker
+function hideClickBlocker() {
+    const clickBlocker = document.getElementById('click-blocker');
+    if (clickBlocker) {
+        clickBlocker.style.display = 'none';
+        clickBlocker.classList.remove('clickable');
     }
 }
 
