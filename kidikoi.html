@@ -1,0 +1,84 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <!-- Main Page -->
+    <div id="main-page" class="page active">
+        <div class="container">
+            <h1 class="main-title">KIDIKOI</h1>
+            <h2 class="subtitle">Découvrez vos politiciens</h2>
+            
+            <div class="buttons-container">
+                <button class="main-button" data-page="game1">Jeu 1</button>
+                <button class="main-button" data-page="game2">Jeu 2</button>
+                <button class="main-button" data-page="game3">Jeu 3</button>
+                <button class="main-button" data-page="game4">Jeu 4</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Game Pages (to be implemented) -->
+    <div id="game1-page" class="page">
+        <div class="container">
+            <div class="header-row">
+                <button class="back-button">← Home</button>
+                <h2 class="game-title">Qui a dit ça ?</h2>
+            </div>
+            
+            <div class="quote-box">
+                <p class="quote-text" id="quote-text">Chargement...</p>
+                <button class="info-button" id="info-button" style="display: none;">+ d'infos</button>
+            </div>
+            
+            <div class="images-grid">
+                <div class="image-option" data-index="0">
+                    <img src="" alt="Option 1" id="img-0">
+                    <div class="name-label" id="name-0"></div>
+                </div>
+                <div class="image-option" data-index="1">
+                    <img src="" alt="Option 2" id="img-1">
+                    <div class="name-label" id="name-1"></div>
+                </div>
+                <div class="image-option" data-index="2">
+                    <img src="" alt="Option 3" id="img-2">
+                    <div class="name-label" id="name-2"></div>
+                </div>
+                <div class="image-option" data-index="3">
+                    <img src="" alt="Option 4" id="img-3">
+                    <div class="name-label" id="name-3"></div>
+                </div>
+            </div>
+            
+       
+        </div>
+    </div>
+
+    <div id="game2-page" class="page">
+        <div class="container">
+            <button class="back-button">← Home</button>
+            <h2>Jeu 2</h2>
+        </div>
+    </div>
+
+    <div id="game3-page" class="page">
+        <div class="container">
+            <button class="back-button">← Home</button>
+            <h2>Jeu 3</h2>
+        </div>
+    </div>
+
+    <div id="game4-page" class="page">
+        <div class="container">
+            <button class="back-button">← Home</button>
+            <h2>Jeu 4</h2>
+        </div>
+    </div>
+
+    <script src="script.js"></script>
+</body>
+</html>
