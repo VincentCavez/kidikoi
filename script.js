@@ -73,7 +73,13 @@ document.addEventListener('DOMContentLoaded', function() {
     // Event listener for click blocker - to continue to next question
     const clickBlocker = document.getElementById('click-blocker');
     if (clickBlocker) {
-        clickBlocker.addEventListener('click', function() {
+        clickBlocker.addEventListener('click', function(event) {
+            // Check if click is on info button or inside it
+            const infoButton = document.getElementById('info-button');
+            if (infoButton && (event.target === infoButton || infoButton.contains(event.target))) {
+                return; // Don't continue to next question, let the button handle the click
+            }
+            
             if (this.classList.contains('clickable')) {
                 loadRandomQuote();
             }
@@ -86,7 +92,10 @@ document.addEventListener('DOMContentLoaded', function() {
     // Setup info button click handler
     const infoButton = document.getElementById('info-button');
     if (infoButton) {
-        infoButton.addEventListener('click', showInfoPopup);
+        infoButton.addEventListener('click', function(event) {
+            event.stopPropagation(); // Prevent click from reaching click-blocker
+            showInfoPopup();
+        });
     }
     
     // Setup popup overlay click handler (close on click outside)
@@ -114,8 +123,12 @@ function handleImageClick(event) {
     const clickedIndex = parseInt(clickedOption.getAttribute('data-index'));
     const clickedId = currentQuestion.allIds[clickedIndex];
     
-    // Check if already answered
-    if (clickedOption.classList.contains('disabled')) {
+    // Check if already answered (timer text is visible or click blocker is active)
+    const timerText = document.getElementById('timer-text');
+    const clickBlocker = document.getElementById('click-blocker');
+    if (clickedOption.classList.contains('disabled') || 
+        (timerText && timerText.style.display === 'block') ||
+        (clickBlocker && clickBlocker.style.display === 'block')) {
         return;
     }
     
@@ -125,9 +138,24 @@ function handleImageClick(event) {
     // Show click blocker to disable all clicks
     showClickBlocker(false);
     
-    // Disable all options
+    // Disable all options except the correct one
     const allOptions = document.querySelectorAll('.image-option');
-    allOptions.forEach(opt => opt.classList.add('disabled'));
+    let correctIndex = -1;
+    
+    // Find the correct index
+    allOptions.forEach((opt, index) => {
+        const optId = currentQuestion.allIds[index];
+        if (optId === currentQuestion.correctId) {
+            correctIndex = index;
+        }
+    });
+    
+    // Disable all options except the correct one
+    allOptions.forEach((opt, index) => {
+        if (index !== correctIndex) {
+            opt.classList.add('disabled');
+        }
+    });
     
     let resultMessage = '';
     
@@ -166,8 +194,16 @@ function handleImageClick(event) {
     
     // Show info button and continue text after 1.5 seconds
     setTimeout(() => {
+        // Find the correct option and add the info button to it
+        const correctOption = Array.from(allOptions).find((opt, idx) => {
+            return currentQuestion.allIds[idx] === currentQuestion.correctId;
+        });
+        
         const infoButton = document.getElementById('info-button');
-        if (infoButton) {
+        if (infoButton && correctOption) {
+            // Move the button to the correct option
+            correctOption.appendChild(infoButton);
+            correctOption.style.zIndex = '600'; // Ensure it's above the click-blocker
             infoButton.style.display = 'block';
         }
         
@@ -373,12 +409,18 @@ function resetImageOptions() {
         // Reset inline styles
         opt.style.borderColor = '';
         opt.style.borderWidth = '';
+        opt.style.zIndex = '';
     });
     
-    // Hide info button
+    // Hide and remove info button from image option
     const infoButton = document.getElementById('info-button');
     if (infoButton) {
         infoButton.style.display = 'none';
+        // Move it back to container
+        const container = document.querySelector('.container');
+        if (container && infoButton.parentElement) {
+            container.appendChild(infoButton);
+        }
     }
     
     // Hide click blocker
@@ -477,9 +519,8 @@ function handleTimerEnd() {
     // Show click blocker to disable all clicks
     showClickBlocker(false);
     
-    // Disable all options
+    // Disable all options except the correct one
     const allOptions = document.querySelectorAll('.image-option');
-    allOptions.forEach(opt => opt.classList.add('disabled'));
     
     // Find and highlight the correct answer (only border, no background change on name-label)
     allOptions.forEach((opt, index) => {
@@ -488,8 +529,10 @@ function handleTimerEnd() {
             // Add only the border styling, not the full "correct" class
             opt.style.borderColor = '#51cb00';
             opt.style.borderWidth = '5px';
+            // Don't disable the correct option
         } else {
             opt.classList.add('faded');
+            opt.classList.add('disabled'); // Only disable the incorrect options
         }
     });
     
@@ -498,8 +541,16 @@ function handleTimerEnd() {
     
     // Show info button and continue text after 1.5 seconds
     setTimeout(() => {
+        // Find the correct option and add the info button to it
+        const correctOption = Array.from(allOptions).find((opt, idx) => {
+            return currentQuestion.allIds[idx] === currentQuestion.correctId;
+        });
+        
         const infoButton = document.getElementById('info-button');
-        if (infoButton) {
+        if (infoButton && correctOption) {
+            // Move the button to the correct option
+            correctOption.appendChild(infoButton);
+            correctOption.style.zIndex = '600'; // Ensure it's above the click-blocker
             infoButton.style.display = 'block';
         }
         

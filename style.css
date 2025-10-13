@@ -162,14 +162,14 @@ body {
 /* Info Button */
 .info-button {
     position: absolute;
-    bottom: 0px;
+    top: 10px;
     right: 10px;
-    padding: 8px 8px;
-    font-size: 0.9rem;
+    padding: 8px 12px;
+    font-size: 0.85rem;
     font-weight: 600;
-    background: rgba(255, 255, 255, 0.2);
-    color: white;
-    border: 1px solid rgba(255, 255, 255, 0.3);
+    background: rgba(255, 255, 255, 0.9);
+    color: #333;
+    border: 2px solid #333;
     border-radius: 8px;
     cursor: pointer;
     transition: all 0.3s ease;
@@ -178,9 +178,9 @@ body {
 }
 
 .info-button:hover {
-    background: rgba(255, 255, 255, 0.3);
-    border-color: rgba(255, 255, 255, 0.5);
-    transform: translateY(-2px);
+    background: rgba(255, 255, 255, 1);
+    border-color: #51cb00;
+    transform: scale(1.05);
 }
 
 /* Popup Overlay */
@@ -319,6 +319,7 @@ body {
     background-color: white;
     display: flex;
     flex-direction: column;
+    position: relative;
 }
 
 .image-option:hover {
