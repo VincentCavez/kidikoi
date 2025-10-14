@@ -1,13 +1,26 @@
-citation_courte,id,nom,prenom,contexte_complet,date,source_url
-Qu'ils s'en aillent tous !,jlmelenchon,Mélenchon,Jean-Luc,"La consigne ne visera pas seulement ce président, roi des accointances, et ses ministres, ce conseil d'administration gouvernemental de la clique du Fouquet's ! Elle concernera toute l'oligarchie bénéficiaire du gâchis actuel. Qu'ils s'en aillent tous ! Les patrons hors de prix, les sorciers du fric qui transforment tout ce qui est humain en marchandise.",2010,https://fr.wikiquote.org/wiki/Jean-Luc_M%C3%A9lenchon
-"Quand l'émeute montre la misère, l'idiot regarde le Nutella.",jlmelenchon,Mélenchon,Jean-Luc,"Quand l'émeute montre la misère, l'idiot regarde le Nutella. (revisite du célèbre proverbe chinois 'Quand le sage montre la Lune, l'idiot regarde le doigt')",26/01/2018,https://www.babelio.com/auteur/Jean-Luc-Melenchon/72437/citations
-La France est une université des djihadistes.,mlepen,Le Pen,Marine,"Nos compagnons juifs le savent, l'antisémitisme est dû à l'implantation de l'islamisme dans notre pays. La France est une université des djihadistes.",2012-2015,https://www.dicocitations.com/auteur/10358/Marine_Le_Pen.php
-"De toute façon la France sera dirigée par une femme : ce sera, ou moi, ou Madame Merkel.",mlepen,Le Pen,Marine,"De toute façon la France sera dirigée par une femme : ce sera, ou moi, ou Madame Merkel.",03/05/2017,https://fr.wikiquote.org/wiki/Marine_Le_Pen
-"Monsieur Macron, vous êtes l'héritier de François Hollande.",mlepen,Le Pen,Marine,"Monsieur Macron, vous êtes l'héritier de François Hollande.",03/05/2017,https://fr.wikiquote.org/wiki/Marine_Le_Pen
-"Qui vient sur la grande muraille, conquiert la bravitude",sroyal,Royal,Ségolène,"Qui vient sur la grande muraille, conquiert la bravitude. (Lors d'un voyage en Chine)",2007,https://fr.wikipedia.org/wiki/Prix_de_l'humour_politique
-Je demande à l'ensemble des forces politiques se reconnaissant dans les institutions républicaines d'engager un dialogue sincère et loyal pour bâtir une majorité solide.,emacron,Macron,Emmanuel,"Je demande à l'ensemble des forces politiques se reconnaissant dans les institutions républicaines, l'État de droit, le parlementarisme, une orientation européenne et la défense de l'indépendance française, d'engager un dialogue sincère et loyal pour bâtir une majorité solide, nécessairement plurielle, pour le pays.",10/07/2024,https://lesfrancais.press/les-10-citations-de-lannee-2024/
-2024 sera une année de clarification,mlepen,Le Pen,Marine,"Lors d'une conférence de début d'année à l'Assemblée, Marine Le Pen a déclaré que 2024 serait une année de clarification. Elle a aussi évoqué les élections européennes.",25/01/2024,https://lcp.fr/actualites/2024-sera-une-annee-de-clarification-declare-marine-le-pen-lors-d-une-conference-de
-"L'Union européenne n'a plus pour projet une union mais une fusion, plus pour projet l'Europe mais en réalité la disparition des nations.",mlepen,Le Pen,Marine,"On le voit en Hollande, Allemagne, et évidemment on le voit en France avec la révolte des agriculteurs et des pêcheurs notamment. L'Union européenne n'a plus pour projet une union mais une fusion, plus pour projet l'Europe mais en réalité la disparition des nations.",25/01/2024,https://lcp.fr/actualites/2024-sera-une-annee-de-clarification-declare-marine-le-pen-lors-d-une-conference-de
-"Nous autres qui avons été élus sur un même programme, notre devoir est de nous retrouver pour examiner tous les moyens qui nous permettent de faire face à la situation nouvelle.",jlmelenchon,Mélenchon,Jean-Luc,"Le leader de LFI appelle les partis de gauche représentés à l'Assemblée nationale à se réunir pour envisager la suite. Nous autres qui avons été élus sur un même programme, notre devoir est de nous retrouver pour examiner tous les moyens qui nous permettent de faire face à la situation nouvelle.",06/10/2025,https://lcp.fr/actualites/demission-de-sebastien-lecornu-jean-luc-melenchon-appelle-la-gauche-a-se-retrouver-pour
-Emmanuel Macron est l'origine du chaos.,jlmelenchon,Mélenchon,Jean-Luc,"Pour Jean-Luc Mélenchon, Emmanuel Macron est l'origine du chaos. Le triple candidat à l'élection présidentielle a appelé à la destitution du président de la République, quelques heures après la démission du Premier ministre Sébastien Lecornu.",06/10/2025,https://lcp.fr/actualites/demission-de-sebastien-lecornu-jean-luc-melenchon-appelle-la-gauche-a-se-retrouver-pour
-Il faut retrouver la voie de l'emploi pour pouvoir supprimer les 35 heures.,mlepen,Le Pen,Marine,Il faut retrouver la voie de l'emploi pour pouvoir supprimer les 35 heures.,30/06/2014,https://www.revolutionpermanente.fr/Les-14-phrases-qui-montrent-le-vrai-visage-de-Marine-Le-Pen
+id;prenom;nom;genre;parti
+jlmelenchon;Jean-Luc;Mélenchon;homme;gauche
+mlepen;Marine;Le Pen;femme;droite
+sroyal;Ségolène;Royal;femme;gauche
+bkouchner;Bernard;Kouchner;homme;gauche
+rbachelot;Roselyne;Bachelot;femme;droite
+dstrausskahn;Dominique;Strauss-Kahn;homme;gauche
+mvalls;Manuel;Valls;homme;gauche
+mbarnier;Michel;Barnier;homme;droite
+jpraffarin;Jean-Pierre;Raffarin;homme;droite
+ddvillepin;Dominique;de Villepin;homme;droite
+nsarkozy;Nicolas;Sarkozy;homme;droite
+fbayrou;François;Bayrou;homme;centre
+malliotmarie;Michèle;Alliot-Marie;femme;droite
+pdvilliers;Philippe;de Villiers;homme;droite
+fhollande;François;Hollande;homme;gauche
+bdelanoe;Bertrand;Delanoë;homme;gauche
+nmorano;Nadine;Morano;femme;droite
+pbalkany;Patrick;Balkany;homme;droite
+rdati;Rachida;Dati;femme;droite
+lfabius;Laurent;Fabius;homme;gauche
+cduflot;Cécile;Duflot;femme;gauche
+pcharon;Pierre;Charon;homme;droite
+ejoly;Eva;Joly;femme;gauche
+emacron;Emmanuel;Macron;homme;centre
+jchirac;Jacques;Chirac;homme;droite
