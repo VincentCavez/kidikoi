@@ -311,7 +311,7 @@ body {
 }
 
 .image-option {
-    border: none;
+    border: 5px solid transparent;
     border-radius: 15px;
     overflow: hidden;
     cursor: pointer;

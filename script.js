@@ -2,6 +2,10 @@
 let politicsQuotes = [];
 let popCultureQuotes = [];
 
+// Global maps for people (id -> person info)
+let politicsPeopleById = {};
+let popCulturePeopleById = {};
+
 // Global object for current question
 let currentQuestion = {
     quote: '',
@@ -215,24 +219,33 @@ function handleImageClick(event) {
     }, 1500);
 }
 
-// Function to parse CSV
+// Function to parse CSV with automatic delimiter detection ("," or ";")
 function parseCSV(text) {
-    const lines = text.trim().split('\n');
-    const headers = lines[0].split(',');
+    const trimmed = text.trim();
+    if (!trimmed) return [];
+    const lines = trimmed.split('\n');
+
+    // Detect delimiter based on header line
+    const headerLine = lines[0];
+    const commaCount = (headerLine.match(/,/g) || []).length;
+    const semiCount = (headerLine.match(/;/g) || []).length;
+    const delimiter = semiCount > commaCount ? ';' : ',';
+
+    const headers = headerLine.split(delimiter).map(h => h.trim());
     const data = [];
-    
+
     for (let i = 1; i < lines.length; i++) {
         const line = lines[i];
         const values = [];
         let currentValue = '';
         let insideQuotes = false;
-        
+
         for (let j = 0; j < line.length; j++) {
             const char = line[j];
-            
+
             if (char === '"') {
                 insideQuotes = !insideQuotes;
-            } else if (char === ',' && !insideQuotes) {
+            } else if (char === delimiter && !insideQuotes) {
                 values.push(currentValue.trim());
                 currentValue = '';
             } else {
@@ -240,34 +253,69 @@ function parseCSV(text) {
             }
         }
         values.push(currentValue.trim());
-        
-        if (values.length === headers.length) {
+
+        if (values.length >= headers.length) {
             const obj = {};
             headers.forEach((header, index) => {
-                obj[header.trim()] = values[index];
+                obj[header] = values[index] !== undefined ? values[index] : '';
             });
             data.push(obj);
         }
     }
-    
+
     return data;
 }
 
 // Function to load CSV data
 async function loadCSVData() {
     try {
-        // Load politics quotes
-        const politicsResponse = await fetch('data/spreadsheet/politiques.csv');
-        const politicsText = await politicsResponse.text();
-        politicsQuotes = parseCSV(politicsText);
-        
-        // Load pop culture quotes
-        const popCultureResponse = await fetch('data/spreadsheet/pop_culture.csv');
-        const popCultureText = await popCultureResponse.text();
-        popCultureQuotes = parseCSV(popCultureText);
-        
-        console.log(`Loaded ${politicsQuotes.length} political quotes`);
-        console.log(`Loaded ${popCultureQuotes.length} pop culture quotes`);
+        // Load people and quotes for politics
+        const [polPeopleResp, polQuotesResp] = await Promise.all([
+            fetch('data/spreadsheet/politiques.csv'),
+            fetch('data/spreadsheet/politiques_citations.csv')
+        ]);
+        const [polPeopleText, polQuotesText] = await Promise.all([
+            polPeopleResp.text(),
+            polQuotesResp.text()
+        ]);
+        const politicsPeople = parseCSV(polPeopleText);
+        politicsQuotes = parseCSV(polQuotesText);
+        politicsPeopleById = {};
+        politicsPeople.forEach(p => {
+            const pid = (p.id || '').trim();
+            if (!pid) return;
+            politicsPeopleById[pid] = {
+                prenom: p.prenom || '',
+                nom: p.nom || '',
+                genre: p.genre || '',
+                parti: p.parti || ''
+            };
+        });
+
+        // Load people and quotes for pop culture
+        const [popPeopleResp, popQuotesResp] = await Promise.all([
+            fetch('data/spreadsheet/personnages.csv'),
+            fetch('data/spreadsheet/personnages_citations.csv')
+        ]);
+        const [popPeopleText, popQuotesText] = await Promise.all([
+            popPeopleResp.text(),
+            popQuotesResp.text()
+        ]);
+        const popPeople = parseCSV(popPeopleText);
+        popCultureQuotes = parseCSV(popQuotesText);
+        popCulturePeopleById = {};
+        popPeople.forEach(p => {
+            const pid = (p.id || '').trim();
+            if (!pid) return;
+            popCulturePeopleById[pid] = {
+                prenom: p.prenom || '',
+                nom: p.nom || '',
+                genre: p.genre || ''
+            };
+        });
+
+        console.log(`Loaded ${politicsQuotes.length} political quotes, ${Object.keys(politicsPeopleById).length} politicians`);
+        console.log(`Loaded ${popCultureQuotes.length} pop-culture quotes, ${Object.keys(popCulturePeopleById).length} characters`);
     } catch (error) {
         console.error('Error loading CSV data:', error);
     }
@@ -289,12 +337,7 @@ function getRandomQuote(quotesArray) {
 // Function to get all unique ids from both datasets
 function getAllIds() {
     const politicsIds = politicsQuotes.map(q => q.id).filter(id => id && id.trim() !== '');
-    const popCultureIds = popCultureQuotes.map(q => {
-        // For pop culture, create a unique id from nom and prenom
-        const nom = q.nom || '';
-        const prenom = q.prenom || '';
-        return (prenom + nom).toLowerCase().replace(/\s+/g, '');
-    }).filter(id => id && id.trim() !== '');
+    const popCultureIds = popCultureQuotes.map(q => q.id).filter(id => id && id.trim() !== '');
     
     return {
         politics: [...new Set(politicsIds)],
@@ -365,16 +408,8 @@ function loadRandomQuote() {
         // Determine if quote is from politics dataset
         const isPolitics = politicsQuotes.includes(quote);
         
-        // Get the correct id
-        let correctId;
-        if (isPolitics) {
-            correctId = quote.id;
-        } else {
-            // For pop culture, create id from nom and prenom
-            const nom = quote.nom || '';
-            const prenom = quote.prenom || '';
-            correctId = (prenom + nom).toLowerCase().replace(/\s+/g, '');
-        }
+        // Get the correct id (now both datasets use an explicit id)
+        let correctId = quote.id;
         
         // Select 3 other random ids
         const otherIds = selectRandomIds(correctId, isPolitics);
@@ -616,30 +651,18 @@ function hideClickBlocker() {
 
 // Function to get person info by id
 function getPersonInfoById(id) {
-    // Search in politics quotes
-    const politicsMatch = politicsQuotes.find(q => q.id === id);
-    if (politicsMatch) {
+    if (politicsPeopleById[id]) {
         return {
-            prenom: politicsMatch.prenom || '',
-            nom: politicsMatch.nom || ''
+            prenom: politicsPeopleById[id].prenom || '',
+            nom: politicsPeopleById[id].nom || ''
         };
     }
-    
-    // Search in pop culture quotes
-    const popCultureMatch = popCultureQuotes.find(q => {
-        const nom = q.nom || '';
-        const prenom = q.prenom || '';
-        const generatedId = (prenom + nom).toLowerCase().replace(/\s+/g, '');
-        return generatedId === id;
-    });
-    
-    if (popCultureMatch) {
+    if (popCulturePeopleById[id]) {
         return {
-            prenom: popCultureMatch.prenom || '',
-            nom: popCultureMatch.nom || ''
+            prenom: popCulturePeopleById[id].prenom || '',
+            nom: popCulturePeopleById[id].nom || ''
         };
     }
-    
     return { prenom: '', nom: '' };
 }
 
@@ -663,16 +686,25 @@ function loadImages() {
             }
         }
         
-        // Try different image extensions
-        const extensions = ['jpg', 'png', 'jpeg', 'webp'];
+        // Try only jpg extension
+        const extensions = ['jpg'];
         let imageFound = false;
         
         // Try to load the image
         const tryLoadImage = (extIndex) => {
             if (extIndex >= extensions.length) {
-                // No image found, use white placeholder
-                imgElement.src = createWhitePlaceholder();
-                imgElement.style.backgroundColor = 'white';
+                // No image found, use default.jpg, fallback to white placeholder
+                const defaultPath = 'data/photos/default.jpg';
+                const testDefault = new Image();
+                testDefault.onload = function() {
+                    imgElement.src = defaultPath;
+                    imgElement.style.backgroundColor = 'transparent';
+                };
+                testDefault.onerror = function() {
+                    imgElement.src = createWhitePlaceholder();
+                    imgElement.style.backgroundColor = 'white';
+                };
+                testDefault.src = defaultPath;
                 return;
             }
             
@@ -716,13 +748,8 @@ function getFullQuoteData(id) {
         return politicsMatch;
     }
     
-    // Search in pop culture quotes  
-    const popCultureMatch = popCultureQuotes.find(q => {
-        const nom = q.nom || '';
-        const prenom = q.prenom || '';
-        const generatedId = (prenom + nom).toLowerCase().replace(/\s+/g, '');
-        return generatedId === id;
-    });
+    // Search in pop culture quotes by explicit id
+    const popCultureMatch = popCultureQuotes.find(q => q.id === id);
     
     return popCultureMatch || null;
 }
@@ -736,21 +763,23 @@ function showInfoPopup() {
     // Populate popup content
     document.getElementById('popup-quote').textContent = quoteData.citation_courte || quoteData.contexte_complet || '';
     
-    const prenom = quoteData.prenom || '';
-    const nom = quoteData.nom || '';
+    const person = getPersonInfoById(currentQuestion.correctId);
+    const prenom = person.prenom || '';
+    const nom = person.nom || '';
     document.getElementById('popup-author').textContent = nom ? `${prenom} ${nom}` : prenom;
     
     document.getElementById('popup-date').textContent = quoteData.date || 'Non renseignée';
     
     document.getElementById('popup-context').textContent = quoteData.contexte_complet || 'Non renseigné';
     
-    const link = quoteData.source_url || quoteData.source || '#';
+    const rawLink = quoteData.source_url || quoteData.source || '';
     const linkElement = document.getElementById('popup-link');
-    linkElement.href = link;
-    if (link === '#') {
-        linkElement.style.display = 'none';
-    } else {
+    const isUrl = /^https?:\/\//i.test(rawLink);
+    if (isUrl) {
+        linkElement.href = rawLink;
         linkElement.style.display = 'inline';
+    } else {
+        linkElement.style.display = 'none';
     }
     
     // Show popup
