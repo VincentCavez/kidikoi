@@ -16,7 +16,7 @@ let currentQuestion = {
 // Timer variables
 let timerInterval = null;
 let timerStartTime = null;
-const TIMER_DURATION = 15000; // 15 seconds in milliseconds
+const TIMER_DURATION = 20000; // 15 seconds in milliseconds
 
 // Navigation between pages
 document.addEventListener('DOMContentLoaded', function() {
@@ -345,50 +345,269 @@ function getAllIds() {
     };
 }
 
-// Function to select 3 random ids (excluding the correct one)
-// Ensures at least one politics id and one pop culture id
-function selectRandomIds(correctId, isCorrectIdPolitics) {
+// Helpers utilitaires
+function parseIdList(value) {
+    if (!value) return [];
+    // Supporte séparateurs virgule/point-virgule et espaces
+    return value
+        .split(/[;,]/)
+        .map(s => s.trim())
+        .filter(s => s.length > 0);
+}
+
+function isPoliticsId(id) {
+    return !!politicsPeopleById[id];
+}
+
+// Helpers: genre/parti par id
+function getGenderForId(id) {
+    if (politicsPeopleById[id]) return (politicsPeopleById[id].genre || '').toLowerCase();
+    if (popCulturePeopleById[id]) return (popCulturePeopleById[id].genre || '').toLowerCase();
+    return '';
+}
+
+function getPartyForId(id) {
+    if (politicsPeopleById[id]) return (politicsPeopleById[id].parti || '').toLowerCase();
+    return '';
+}
+
+// Pool de candidats configurables
+function getCandidatePool({ includePolitics, includePop, excludeIds, genre, party }) {
     const allIds = getAllIds();
-    const availablePoliticsIds = allIds.politics.filter(id => id !== correctId);
-    const availablePopCultureIds = allIds.popCulture.filter(id => id !== correctId);
-    
-    let selectedIds = [];
-    
-    if (isCorrectIdPolitics) {
-        // Correct answer is politics, so we MUST have at least one pop culture id
-        // Select 1 pop culture id
-        if (availablePopCultureIds.length > 0) {
-            const randomPopIndex = Math.floor(Math.random() * availablePopCultureIds.length);
-            selectedIds.push(availablePopCultureIds[randomPopIndex]);
-            availablePopCultureIds.splice(randomPopIndex, 1);
+    let pool = [];
+
+    if (includePolitics) {
+        let ids = allIds.politics.slice();
+        if (party) {
+            const p = party.toLowerCase();
+            ids = ids.filter(id => getPartyForId(id) === p);
         }
-        
-        // Fill remaining 2 slots with random ids from both datasets
-        const combinedAvailable = [...availablePoliticsIds, ...availablePopCultureIds];
-        while (selectedIds.length < 3 && combinedAvailable.length > 0) {
-            const randomIndex = Math.floor(Math.random() * combinedAvailable.length);
-            selectedIds.push(combinedAvailable[randomIndex]);
-            combinedAvailable.splice(randomIndex, 1);
+        pool = pool.concat(ids);
+    }
+    if (includePop) {
+        pool = pool.concat(allIds.popCulture);
+    }
+
+    // Filtre genre si précisé
+    if (genre) {
+        const g = genre.toLowerCase();
+        pool = pool.filter(id => getGenderForId(id) === g);
+    }
+
+    // Exclusions et déduplication
+    const excludeSet = new Set(excludeIds || []);
+    const seen = new Set();
+    const filtered = [];
+    for (const id of pool) {
+        if (excludeSet.has(id)) continue;
+        if (seen.has(id)) continue;
+        seen.add(id);
+        filtered.push(id);
+    }
+    return filtered;
+}
+
+function pickNRandom(arr, n) {
+    const copy = arr.slice();
+    const out = [];
+    while (out.length < n && copy.length > 0) {
+        const idx = Math.floor(Math.random() * copy.length);
+        out.push(copy[idx]);
+        copy.splice(idx, 1);
+    }
+    return out;
+}
+
+// Nouvelle sélection des 3 autres ids selon les règles
+function selectIdsForQuote(quote, isPolitics) {
+    const correctId = quote.id;
+    const genreConstraint = (quote.genre_citation || '').trim().toLowerCase();
+    const partyConstraint = isPolitics ? (quote.parti_citation || '').trim().toLowerCase() : '';
+    const forbidFictif = isPolitics && ((quote.autorisation_fictif || '').trim().toLowerCase() === 'non');
+    const obligationRaw = (quote.obligation || '').trim();
+    const interdictionRaw = (quote.interdiction || '').trim();
+    const interdictionIdsSet = new Set(parseIdList(interdictionRaw));
+    let obligationIds = parseIdList(obligationRaw);
+
+    let otherIds = [];
+
+    // Retire de l'obligation l'id correct et toute interdiction
+    obligationIds = obligationIds.filter(id => id && id !== correctId && !interdictionIdsSet.has(id));
+
+    if (isPolitics) {
+        if (partyConstraint) {
+            // 4 options = politiciens du même parti
+            // Pré-sélection des obligations compatibles (même parti et genre si défini)
+            const preOblig = [];
+            obligationIds.forEach(id => {
+                if (!isPoliticsId(id)) return;
+                if (genreConstraint && getGenderForId(id) !== genreConstraint) return;
+                if (getPartyForId(id) !== partyConstraint) return;
+                if (preOblig.length < 3) preOblig.push(id);
+            });
+            otherIds = otherIds.concat(preOblig);
+
+            const excludeBase = [correctId, ...otherIds, ...Array.from(interdictionIdsSet)];
+            let pool = getCandidatePool({
+                includePolitics: true,
+                includePop: false,
+                excludeIds: excludeBase,
+                genre: genreConstraint,
+                party: partyConstraint
+            });
+            otherIds = otherIds.concat(pickNRandom(pool, 3 - otherIds.length));
+
+            // Fallback: si pas assez, on relâche le parti mais on garde le dataset politique
+            if (otherIds.length < 3) {
+                pool = getCandidatePool({
+                    includePolitics: true,
+                    includePop: false,
+                    excludeIds: [correctId, ...otherIds, ...Array.from(interdictionIdsSet)],
+                    genre: genreConstraint
+                });
+                otherIds = otherIds.concat(pickNRandom(pool, 3 - otherIds.length));
+            }
+        } else if (forbidFictif) {
+            // 4 options = politiciens uniquement
+            // Pré-sélection des obligations compatibles (politiciens et genre si défini)
+            const preOblig = [];
+            obligationIds.forEach(id => {
+                if (!isPoliticsId(id)) return;
+                if (genreConstraint && getGenderForId(id) !== genreConstraint) return;
+                if (preOblig.length < 3) preOblig.push(id);
+            });
+            otherIds = otherIds.concat(preOblig);
+
+            let pool = getCandidatePool({
+                includePolitics: true,
+                includePop: false,
+                excludeIds: [correctId, ...otherIds, ...Array.from(interdictionIdsSet)],
+                genre: genreConstraint
+            });
+            otherIds = otherIds.concat(pickNRandom(pool, 3 - otherIds.length));
+
+            // Fallback: si pas assez, on relâche le genre mais on garde le dataset politique
+            if (otherIds.length < 3) {
+                pool = getCandidatePool({
+                    includePolitics: true,
+                    includePop: false,
+                    excludeIds: [correctId, ...otherIds, ...Array.from(interdictionIdsSet)]
+                });
+                otherIds = otherIds.concat(pickNRandom(pool, 3 - otherIds.length));
+            }
+        } else {
+            // Ni parti, ni interdiction de fictif:
+            // exactement 1 ou 2 personnages pop-culture (au hasard), le reste en politiciens
+            // Pré-sélection obligations compatibles avec genre
+            const preOblig = [];
+            obligationIds.forEach(id => {
+                if (genreConstraint && getGenderForId(id) !== genreConstraint) return;
+                if (preOblig.length < 3) preOblig.push(id);
+            });
+            otherIds = otherIds.concat(preOblig);
+
+            let nbPop = 1 + Math.floor(Math.random() * 2); // 1 ou 2
+            const numObligPop = preOblig.filter(id => !isPoliticsId(id)).length;
+            const numObligPol = preOblig.filter(id => isPoliticsId(id)).length;
+            // Ajuste pour respecter les obligations déjà posées
+            nbPop = Math.max(nbPop, numObligPop);
+            nbPop = Math.min(nbPop, 3 - numObligPol);
+
+            const baseExclude = [correctId, ...otherIds, ...Array.from(interdictionIdsSet)];
+
+            const popPool = getCandidatePool({
+                includePolitics: false,
+                includePop: true,
+                excludeIds: baseExclude,
+                genre: genreConstraint
+            });
+            const polPool = getCandidatePool({
+                includePolitics: true,
+                includePop: false,
+                excludeIds: baseExclude,
+                genre: genreConstraint
+            });
+
+            const neededPop = Math.max(0, nbPop - preOblig.filter(id => !isPoliticsId(id)).length);
+            const neededPol = Math.max(0, 3 - otherIds.length - neededPop);
+            const chosenPop = pickNRandom(popPool, neededPop);
+            const chosenPol = pickNRandom(polPool, neededPol);
+            otherIds = otherIds.concat(chosenPop).concat(chosenPol);
+
+            // Fallback: compléter si nécessaire (on respecte le genre si possible)
+            if (otherIds.length < 3) {
+                const fillPool = getCandidatePool({
+                    includePolitics: true,
+                    includePop: true,
+                    excludeIds: [correctId, ...otherIds, ...Array.from(interdictionIdsSet)],
+                    genre: genreConstraint
+                });
+                otherIds = otherIds.concat(pickNRandom(fillPool, 3 - otherIds.length));
+            }
         }
     } else {
-        // Correct answer is pop culture, so we MUST have at least one politics id
-        // Select 1 politics id
-        if (availablePoliticsIds.length > 0) {
-            const randomPolIndex = Math.floor(Math.random() * availablePoliticsIds.length);
-            selectedIds.push(availablePoliticsIds[randomPolIndex]);
-            availablePoliticsIds.splice(randomPolIndex, 1);
+        // Citation pop-culture: ignorer parti et autorisation_fictif
+        // Respecter le genre si précisé et imposer exactement 1 ou 2 personnages au total
+        // (donc parmi les 3 autres: 0 ou 1 personnages)
+
+        // Pré-sélection obligations compatibles (respecte genre si défini)
+        const preOblig = [];
+        obligationIds.forEach(id => {
+            if (genreConstraint && getGenderForId(id) !== genreConstraint) return;
+            if (preOblig.length < 3) preOblig.push(id);
+        });
+        otherIds = otherIds.concat(preOblig);
+
+        const popPool = getCandidatePool({
+            includePolitics: false,
+            includePop: true,
+            excludeIds: [correctId, ...otherIds, ...Array.from(interdictionIdsSet)],
+            genre: genreConstraint
+        });
+        const polPool = getCandidatePool({
+            includePolitics: true,
+            includePop: false,
+            excludeIds: [correctId, ...otherIds, ...Array.from(interdictionIdsSet)],
+            genre: genreConstraint
+        });
+
+        // 0 ou 1 personnage en plus (au hasard), ajusté par obligations pop déjà incluses
+        const numObligPop = preOblig.filter(id => !isPoliticsId(id)).length;
+        const numObligPol = preOblig.filter(id => isPoliticsId(id)).length;
+        let desiredNbPopOther = Math.floor(Math.random() * 2); // 0 ou 1
+        desiredNbPopOther = Math.max(desiredNbPopOther, numObligPop);
+        desiredNbPopOther = Math.min(desiredNbPopOther, 3 - numObligPol);
+
+        // Adapter aux disponibilités des pools
+        if (popPool.length < desiredNbPopOther) {
+            desiredNbPopOther = popPool.length;
         }
-        
-        // Fill remaining 2 slots with random ids from both datasets
-        const combinedAvailable = [...availablePoliticsIds, ...availablePopCultureIds];
-        while (selectedIds.length < 3 && combinedAvailable.length > 0) {
-            const randomIndex = Math.floor(Math.random() * combinedAvailable.length);
-            selectedIds.push(combinedAvailable[randomIndex]);
-            combinedAvailable.splice(randomIndex, 1);
+        if (polPool.length < (3 - otherIds.length - desiredNbPopOther)) {
+            // Ajuste pour pouvoir compléter avec des politiciens
+            const maxPopGivenPol = 3 - otherIds.length - polPool.length;
+            desiredNbPopOther = Math.min(desiredNbPopOther, Math.max(0, maxPopGivenPol));
+            desiredNbPopOther = Math.max(desiredNbPopOther, numObligPop);
+        }
+
+        const neededPop = Math.max(0, desiredNbPopOther);
+        const neededPol = Math.max(0, 3 - otherIds.length - neededPop);
+        const chosenPop = pickNRandom(popPool, neededPop);
+        const chosenPol = pickNRandom(polPool, neededPol);
+        otherIds = otherIds.concat(chosenPol).concat(chosenPop);
+
+        // Fallback final si le total n'atteint pas 3 (toujours respecter le genre si présent)
+        if (otherIds.length < 3) {
+            const fillPool = getCandidatePool({
+                includePolitics: true,
+                includePop: true,
+                excludeIds: [correctId, ...otherIds, ...Array.from(interdictionIdsSet)],
+                genre: genreConstraint
+            });
+            otherIds = otherIds.concat(pickNRandom(fillPool, 3 - otherIds.length));
         }
     }
-    
-    return selectedIds;
+
+    return otherIds;
 }
 
 // Function to load and display a random quote
@@ -411,8 +630,8 @@ function loadRandomQuote() {
         // Get the correct id (now both datasets use an explicit id)
         let correctId = quote.id;
         
-        // Select 3 other random ids
-        const otherIds = selectRandomIds(correctId, isPolitics);
+        // Sélectionne 3 autres ids selon les règles
+        const otherIds = selectIdsForQuote(quote, isPolitics);
         
         // Create the global question object
         currentQuestion = {
