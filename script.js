@@ -13,10 +13,12 @@ let currentQuestion = {
     allIds: [] // Array of 4 ids including the correct one
 };
 
-// Timer variables
+// Timer & game variables
 let timerInterval = null;
 let timerStartTime = null;
-const TIMER_DURATION = 20000; // 15 seconds in milliseconds
+const TIMER_DURATION = 20000; // 20 seconds in milliseconds
+let currentRound = 0; // 1..10
+let score = 0; // number of correct answers
 
 // Navigation between pages
 document.addEventListener('DOMContentLoaded', function() {
@@ -41,8 +43,9 @@ document.addEventListener('DOMContentLoaded', function() {
         // Scroll to top
         window.scrollTo(0, 0);
         
-        // If going to game 1, load a quote
+        // If going to game 1, (re)start game if needed and load a quote
         if (pageId === 'game1-page') {
+            startNewGameIfNeeded();
             loadRandomQuote();
         } else {
             // Stop timer if leaving game 1
@@ -73,6 +76,23 @@ document.addEventListener('DOMContentLoaded', function() {
     if (nextQuoteBtn) {
         nextQuoteBtn.addEventListener('click', loadRandomQuote);
     }
+
+    // End page buttons
+    const restartButton = document.getElementById('restart-button');
+    if (restartButton) {
+        restartButton.addEventListener('click', function() {
+            restartGame();
+        });
+    }
+    const menuButton = document.getElementById('menu-button');
+    if (menuButton) {
+        menuButton.addEventListener('click', function() {
+            // reset state when returning to menu
+            score = 0;
+            currentRound = 0;
+            showPage('main-page');
+        });
+    }
     
     // Event listener for click blocker - to continue to next question
     const clickBlocker = document.getElementById('click-blocker');
@@ -85,7 +105,11 @@ document.addEventListener('DOMContentLoaded', function() {
             }
             
             if (this.classList.contains('clickable')) {
-                loadRandomQuote();
+                if (currentRound >= 10) {
+                    endGame();
+                } else {
+                    loadRandomQuote();
+                }
             }
         });
     }
@@ -194,6 +218,9 @@ function handleImageClick(event) {
     
     // Show result message in timer area
     const isCorrect = clickedId === currentQuestion.correctId;
+    if (isCorrect) {
+        score += 1;
+    }
     showResultInTimer(resultMessage, isCorrect);
     
     // Show info button and continue text after 1.5 seconds
@@ -680,8 +707,13 @@ function resetImageOptions() {
     // Hide click blocker
     hideClickBlocker();
     
-    // Reset timer
+    // Reset timer and advance round
     resetTimer();
+    currentRound += 1;
+    if (currentRound > 10) {
+        endGame();
+        return;
+    }
     startTimer();
 }
 
@@ -757,13 +789,47 @@ function showContinueText() {
     }
     
     if (timerText) {
-        timerText.textContent = 'Appuyez pour continuer';
+        timerText.textContent = (currentRound >= 10) ? 'Appuyer pour afficher le score' : 'Appuyez pour continuer';
         timerText.style.display = 'block';
         timerText.style.cursor = 'pointer';
         // Remove result color classes and force white color
         timerText.classList.remove('correct-result', 'incorrect-result');
         timerText.style.color = 'white';
     }
+}
+
+// Start a new game lazily when entering the game page
+function startNewGameIfNeeded() {
+    if (currentRound === 0) {
+        score = 0;
+        currentRound = 0; // will be incremented to 1 at first resetImageOptions()
+    }
+}
+
+// End the game and show the score screen
+function endGame() {
+    stopTimer();
+    hideClickBlocker();
+    const scoreText = document.getElementById('score-text');
+    if (scoreText) {
+        scoreText.textContent = `Score: ${score} / 10`;
+    }
+    const pages = document.querySelectorAll('.page');
+    pages.forEach(p => p.classList.remove('active'));
+    const endPage = document.getElementById('end-page');
+    if (endPage) endPage.classList.add('active');
+}
+
+// Restart the game from the beginning
+function restartGame() {
+    score = 0;
+    currentRound = 0;
+    hideClickBlocker();
+    const pages = document.querySelectorAll('.page');
+    pages.forEach(p => p.classList.remove('active'));
+    const gamePage = document.getElementById('game1-page');
+    if (gamePage) gamePage.classList.add('active');
+    loadRandomQuote();
 }
 
 // Function to handle timer end (no answer clicked)

@@ -400,6 +400,13 @@ body {
     background: linear-gradient(135deg, #4A8D96 0%, #3A6D76 100%);
 }
 
+/* End Page */
+.score-text {
+    font-size: 1.3rem;
+    margin: 20px 0 30px;
+    color: #B8C5CB;
+}
+
 /* Responsive */
 @media (max-width: 600px) {
     .main-title {
