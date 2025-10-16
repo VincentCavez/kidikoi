@@ -35,9 +35,12 @@
                 <button class="back-button">← Home</button>
                 <h2 class="game-title">Qui a dit ça ?</h2>
             </div>
-            
-            <div class="quote-box">
-                <p class="quote-text" id="quote-text">Chargement...</p>
+            <div class="upper-content">
+                
+                
+                <div class="quote-box">
+                    <p class="quote-text" id="quote-text">Chargement...</p>
+                </div>
             </div>
             
             <!-- Info Button (will be moved dynamically to correct answer) -->
@@ -56,29 +59,31 @@
                 </div>
             </div>
             
-            <div class="images-grid">
-                <div class="image-option" data-index="0">
-                    <img src="" alt="Option 1" id="img-0">
-                    <div class="name-label" id="name-0"></div>
+            <div class="grid-and-timer">
+                <div class="images-grid">
+                    <div class="image-option" data-index="0">
+                        <img src="" alt="Option 1" id="img-0">
+                        <div class="name-label" id="name-0"></div>
+                    </div>
+                    <div class="image-option" data-index="1">
+                        <img src="" alt="Option 2" id="img-1">
+                        <div class="name-label" id="name-1"></div>
+                    </div>
+                    <div class="image-option" data-index="2">
+                        <img src="" alt="Option 3" id="img-2">
+                        <div class="name-label" id="name-2"></div>
+                    </div>
+                    <div class="image-option" data-index="3">
+                        <img src="" alt="Option 4" id="img-3">
+                        <div class="name-label" id="name-3"></div>
+                    </div>
                 </div>
-                <div class="image-option" data-index="1">
-                    <img src="" alt="Option 2" id="img-1">
-                    <div class="name-label" id="name-1"></div>
+                
+                <!-- Timer Bar -->
+                <div class="timer-container">
+                    <div class="timer-bar" id="timer-bar"></div>
+                    <div class="timer-text" id="timer-text" style="display: none;">Appuyez pour continuer</div>
                 </div>
-                <div class="image-option" data-index="2">
-                    <img src="" alt="Option 3" id="img-2">
-                    <div class="name-label" id="name-2"></div>
-                </div>
-                <div class="image-option" data-index="3">
-                    <img src="" alt="Option 4" id="img-3">
-                    <div class="name-label" id="name-3"></div>
-                </div>
-            </div>
-            
-            <!-- Timer Bar -->
-            <div class="timer-container">
-                <div class="timer-bar" id="timer-bar"></div>
-                <div class="timer-text" id="timer-text" style="display: none;">Appuyez pour continuer</div>
             </div>
             
             <!-- Click Blocker Overlay -->

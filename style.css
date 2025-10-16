@@ -127,9 +127,14 @@ body {
 }
 
 /* Quote Box */
+.upper-content {
+    height: 15vh;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+}
+
 .quote-box {
-   
-   
     padding-bottom: 20px;
     display: flex;
     align-items: center;
@@ -300,6 +305,13 @@ body {
 }
 
 /* Images Grid */
+.grid-and-timer {
+    position: fixed;
+    top: 30vh; /* top of images-grid at 70% from bottom of the page */
+    left: 0;
+    right: 0;
+}
+
 .images-grid {
     display: grid;
     grid-template-columns: 1fr 1fr;
@@ -308,6 +320,10 @@ body {
     max-width: 400px;
     margin-left: auto;
     margin-right: auto;
+}
+
+.grid-and-timer .images-grid {
+    margin-top: 0; /* ensure the top of the grid sits exactly at 30vh */
 }
 
 .image-option {
