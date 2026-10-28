@@ -960,13 +960,12 @@ function loadImages() {
             }
         }
         
-        // Try only jpg extension
-        const extensions = ['jpg'];
-        let imageFound = false;
+        // Illustrated avatar first, then the photo
+        const imagePaths = [`data/avatars/${id}.jpg`, `data/photos/${id}.jpg`, `data/photos/${id}.png`];
         
         // Try to load the image
-        const tryLoadImage = (extIndex) => {
-            if (extIndex >= extensions.length) {
+        const tryLoadImage = (pathIndex) => {
+            if (pathIndex >= imagePaths.length) {
                 // No image found, use default.jpg, fallback to white placeholder
                 const defaultPath = 'data/photos/default.jpg';
                 const testDefault = new Image();
@@ -982,8 +981,7 @@ function loadImages() {
                 return;
             }
             
-            const ext = extensions[extIndex];
-            const imagePath = `data/photos/${id}.${ext}`;
+            const imagePath = imagePaths[pathIndex];
             
             // Test if image exists
             const testImg = new Image();
@@ -992,8 +990,8 @@ function loadImages() {
                 imgElement.style.backgroundColor = 'transparent';
             };
             testImg.onerror = function() {
-                // Try next extension
-                tryLoadImage(extIndex + 1);
+                // Try next path
+                tryLoadImage(pathIndex + 1);
             };
             testImg.src = imagePath;
         };

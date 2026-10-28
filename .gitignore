@@ -1,0 +1,9 @@
+# Photos sources téléchargées pour générer les avatars (non affichées sur le site)
+data/photos/wikipedia/
+
+# Environnement Python local
+.venv/
+
+.DS_Store
+.claude/
+__pycache__/

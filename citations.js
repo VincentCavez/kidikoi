@@ -140,11 +140,18 @@ function renderQuote(q) {
     card.className = 'quote-card';
     card.classList.toggle('to-remove', removedKeys.has(q.key));
 
+    // Avatar illustré en priorité, puis la photo, puis l'image par défaut
+    const imagePaths = [`data/avatars/${q.id}.jpg`, `data/photos/${q.id}.jpg`, `data/photos/${q.id}.png`, 'data/photos/default.jpg'];
+    let pathIndex = 0;
     const img = document.createElement('img');
-    img.src = `data/photos/${q.id}.jpg`;
+    img.src = imagePaths[pathIndex];
     img.alt = q.author;
     img.loading = 'lazy';
-    img.onerror = () => { img.onerror = null; img.src = 'data/photos/default.jpg'; };
+    img.onerror = () => {
+        pathIndex += 1;
+        if (pathIndex < imagePaths.length) img.src = imagePaths[pathIndex];
+        else img.onerror = null;
+    };
     card.appendChild(img);
 
     const body = document.createElement('div');
