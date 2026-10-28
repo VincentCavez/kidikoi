@@ -221,7 +221,7 @@ function handleImageClick(event) {
             const optId = currentQuestion.allIds[index];
             if (optId === currentQuestion.correctId) {
                 // Add only the border styling, not the full "correct" class
-                opt.style.borderColor = '#51cb00';
+                opt.style.borderColor = '#1E8E3E';
                 opt.style.borderWidth = '5px';
             } else if (index !== clickedIndex) {
                 opt.classList.add('faded');
@@ -699,6 +699,10 @@ function resetImageOptions() {
         endGame();
         return;
     }
+    const roundCounter = document.getElementById('round-counter');
+    if (roundCounter) {
+        roundCounter.textContent = `${currentRound}/10`;
+    }
     startTimer();
 }
 
@@ -711,7 +715,7 @@ function startTimer() {
     
     // Reset and show timer bar
     timerBar.style.width = '100%';
-    timerBar.style.backgroundColor = '#51cb00'; // Start with green
+    timerBar.style.backgroundColor = '#002395'; // Start with blue
     timerBar.style.display = 'block';
     timerText.style.display = 'none';
     
@@ -724,12 +728,12 @@ function startTimer() {
         
         timerBar.style.width = percentage + '%';
         
-        // Calculate color transition from green to red
-        // percentage: 100% = green (#51cb00), 0% = red (#ff0000)
+        // Calculate color transition from blue to red
+        // percentage: 100% = blue (#002395), 0% = red (#C1121F)
         const ratio = percentage / 100;
-        const red = Math.round(81 + (255 - 81) * (1 - ratio)); // 51 to FF
-        const green = Math.round(203 * ratio); // CB to 00
-        const blue = 0; // Always 00
+        const red = Math.round(0 + (193 - 0) * (1 - ratio)); // 00 to C1
+        const green = Math.round(35 + (18 - 35) * (1 - ratio)); // 23 to 12
+        const blue = Math.round(149 + (31 - 149) * (1 - ratio)); // 95 to 1F
         
         timerBar.style.backgroundColor = `rgb(${red}, ${green}, ${blue})`;
         
@@ -755,7 +759,7 @@ function resetTimer() {
     
     if (timerBar) {
         timerBar.style.width = '100%';
-        timerBar.style.backgroundColor = '#51cb00'; // Reset to green
+        timerBar.style.backgroundColor = '#002395'; // Reset to blue
         timerBar.style.display = 'block';
     }
     
@@ -777,9 +781,9 @@ function showContinueText() {
         timerText.textContent = (currentRound >= 10) ? 'Appuyer pour afficher le score' : 'Appuyez pour continuer';
         timerText.style.display = 'block';
         timerText.style.cursor = 'pointer';
-        // Remove result color classes and force white color
+        // Remove result color classes and let CSS set the color
         timerText.classList.remove('correct-result', 'incorrect-result');
-        timerText.style.color = 'white';
+        timerText.style.color = '';
     }
 }
 
@@ -797,7 +801,7 @@ function endGame() {
     hideClickBlocker();
     const scoreText = document.getElementById('score-text');
     if (scoreText) {
-        scoreText.textContent = `Score: ${score} / 10`;
+        scoreText.textContent = `${score} / 10`;
     }
     const pages = document.querySelectorAll('.page');
     pages.forEach(p => p.classList.remove('active'));
@@ -832,7 +836,7 @@ function handleTimerEnd() {
         const optId = currentQuestion.allIds[index];
         if (optId === currentQuestion.correctId) {
             // Add only the border styling, not the full "correct" class
-            opt.style.borderColor = '#51cb00';
+            opt.style.borderColor = '#1E8E3E';
             opt.style.borderWidth = '5px';
             // Don't disable the correct option
         } else {

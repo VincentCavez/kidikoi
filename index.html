@@ -1,45 +1,45 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="fr">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>KIDIKOI</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Anton&family=Archivo:wght@500;700;800&display=swap">
     <link rel="stylesheet" href="style.css">
     <link rel="icon" href="data/photos/default.jpg">
 </head>
 <body>
     <!-- Main Page -->
-    <div id="main-page" class="page active">
+    <div id="main-page" class="page poster-page active">
         <div class="container">
+            <p class="eyebrow">Votez</p>
             <h1 class="main-title">
-                <span>KI</span>
-                <span>DI</span>
+                <span>KIDI</span>
                 <span>KOI</span>
             </h1>
             <h2 class="subtitle">Découvrez vos politiciens</h2>
-            
+
             <div class="buttons-container">
-                <button class="main-button" style="background-color: #F5D9BB;" data-page="game1">KIDISA</button>
-                <button class="main-button" style="background-color: #EFBD83;" data-page="game2">IDIKOI</button>
-                <button class="main-button" style="background-color: #E28413;" data-page="game3">KIDIKOI</button>
-                
-                <button class="main-button" style="background-color: #DE5A3C;" data-page="game4">Jeu 4</button>
+                <button class="main-button primary" data-page="game1">KIDISA</button>
+                <button class="main-button" data-page="game2">IDIKOI</button>
+                <button class="main-button" data-page="game3">KIDIKOI</button>
+                <button class="main-button" data-page="game4">Jeu 4</button>
             </div>
 
-            <a class="quotes-link" href="citations.html">Voir toutes les citations</a>
+            <a class="quotes-link" href="citations.html">Toutes les citations →</a>
         </div>
     </div>
 
     <!-- Mode choice (shown before each game) -->
-    <div id="mode-page" class="page">
+    <div id="mode-page" class="page poster-page">
         <div class="container">
-            <div class="header-row">
-                <button class="back-button">← Home</button>
-                <h2 class="game-title">Quels politiques ?</h2>
-            </div>
+            <button class="back-button">← Accueil</button>
+            <h2 class="poster-title">Quels politiques ?</h2>
             <div class="buttons-container">
-                <button class="main-button" style="background-color: #E28413;" data-mode="2027">Présidentielle 2027</button>
-                <button class="main-button" style="background-color: #EFBD83;" data-mode="all">Tous les politiques</button>
+                <button class="main-button primary" data-mode="2027">Présidentielle 2027</button>
+                <button class="main-button" data-mode="all">Tous les politiques</button>
             </div>
         </div>
     </div>
@@ -48,20 +48,19 @@
     <div id="game1-page" class="page">
         <div class="container">
             <div class="header-row">
-                <button class="back-button">← Home</button>
-                <h2 class="game-title">Qui a dit ça ?</h2>
+                <button class="back-button">← Retour</button>
+                <span class="round-counter" id="round-counter"></span>
             </div>
-            <div class="upper-content">
-                
-                
-                <div class="quote-box">
-                    <p class="quote-text" id="quote-text">Chargement...</p>
-                </div>
+
+            <div class="quote-box">
+                <p class="quote-text" id="quote-text">Chargement...</p>
             </div>
-            
+
+            <h2 class="game-title question-title">Qui a dit ça ?</h2>
+
             <!-- Info Button (will be moved dynamically to correct answer) -->
             <button class="info-button" id="info-button" style="display: none;">+ d'infos</button>
-            
+
             <!-- Info Popup -->
             <div class="popup-overlay" id="popup-overlay" style="display: none;">
                 <div class="popup-box" id="popup-box">
@@ -74,7 +73,7 @@
                     </div>
                 </div>
             </div>
-            
+
             <div class="grid-and-timer">
                 <div class="images-grid">
                     <div class="image-option" data-index="0">
@@ -94,24 +93,23 @@
                         <div class="name-label" id="name-3"></div>
                     </div>
                 </div>
-                
+
                 <!-- Timer Bar -->
                 <div class="timer-container">
                     <div class="timer-bar" id="timer-bar"></div>
                     <div class="timer-text" id="timer-text" style="display: none;">Appuyez pour continuer</div>
                 </div>
             </div>
-            
+
             <!-- Click Blocker Overlay -->
             <div class="click-blocker" id="click-blocker" style="display: none;"></div>
-       
         </div>
     </div>
 
     <div id="game2-page" class="page">
         <div class="container">
             <div class="header-row">
-                <button class="back-button">← Home</button>
+                <button class="back-button">← Retour</button>
                 <h2 class="game-title">Jeu 2</h2>
             </div>
         </div>
@@ -120,7 +118,7 @@
     <div id="game3-page" class="page">
         <div class="container">
             <div class="header-row">
-                <button class="back-button">← Home</button>
+                <button class="back-button">← Retour</button>
                 <h2 class="game-title">Jeu 3</h2>
             </div>
         </div>
@@ -129,20 +127,21 @@
     <div id="game4-page" class="page">
         <div class="container">
             <div class="header-row">
-                <button class="back-button">← Home</button>
+                <button class="back-button">← Retour</button>
                 <h2 class="game-title">Jeu 4</h2>
             </div>
         </div>
     </div>
 
     <!-- End Page -->
-    <div id="end-page" class="page">
+    <div id="end-page" class="page poster-page">
         <div class="container">
-            <h2 class="game-title">Fin de partie</h2>
+            <p class="eyebrow">Résultat du scrutin</p>
+            <h2 class="poster-title">Fin de partie</h2>
             <p id="score-text" class="score-text"></p>
             <div class="buttons-container">
-                <button class="main-button" id="restart-button" style="background-color: #F5D9BB;">Relancer</button>
-                <button class="main-button" id="menu-button" style="background-color: #EFBD83;">Menu</button>
+                <button class="main-button primary" id="restart-button">Relancer</button>
+                <button class="main-button" id="menu-button">Menu</button>
             </div>
         </div>
     </div>
