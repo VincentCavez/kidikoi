@@ -59,6 +59,18 @@ body {
     margin-top: 40px;
 }
 
+/* Link to the quotes page */
+.quotes-link {
+    display: inline-block;
+    margin-top: 30px;
+    color: #B8C5CB;
+    text-decoration: underline;
+}
+
+.quotes-link:hover {
+    color: #fff;
+}
+
 /* Main Buttons */
 .main-button {
     width: 100%;
