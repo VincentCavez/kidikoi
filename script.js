@@ -9,9 +9,14 @@ let popCulturePeopleById = {};
 // Global object for current question
 let currentQuestion = {
     quote: '',
+    quoteData: null, // Full CSV row of the current quote
     correctId: '',
     allIds: [] // Array of 4 ids including the correct one
 };
+
+// Game mode: 'all' (tous les politiques) or '2027' (candidats à la présidentielle 2027)
+let gameMode = 'all';
+let pendingGamePage = null; // Game page to open once the mode is chosen
 
 // Timer & game variables
 let timerInterval = null;
@@ -22,8 +27,6 @@ let score = 0; // number of correct answers
 
 // Navigation between pages
 document.addEventListener('DOMContentLoaded', function() {
-    // Get all main buttons
-    const mainButtons = document.querySelectorAll('.main-button');
     const backButtons = document.querySelectorAll('.back-button');
     const pages = document.querySelectorAll('.page');
 
@@ -53,11 +56,21 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     }
 
-    // Add click event to main buttons
-    mainButtons.forEach(button => {
+    // Game buttons open the mode choice first
+    document.querySelectorAll('.main-button[data-page]').forEach(button => {
         button.addEventListener('click', function() {
-            const targetPage = this.getAttribute('data-page') + '-page';
-            showPage(targetPage);
+            pendingGamePage = this.getAttribute('data-page') + '-page';
+            showPage('mode-page');
+        });
+    });
+
+    // Mode buttons start a fresh game in the chosen mode
+    document.querySelectorAll('.main-button[data-mode]').forEach(button => {
+        button.addEventListener('click', function() {
+            gameMode = this.getAttribute('data-mode');
+            score = 0;
+            currentRound = 0;
+            showPage(pendingGamePage || 'game1-page');
         });
     });
 
@@ -268,7 +281,8 @@ async function loadCSVData() {
                 prenom: p.prenom || '',
                 nom: p.nom || '',
                 genre: p.genre || '',
-                parti: p.parti || ''
+                parti: p.parti || '',
+                candidat2027: (p.presidentielle_2027 || '').trim().toLowerCase() === 'oui'
             };
         });
 
@@ -301,10 +315,27 @@ async function loadCSVData() {
     }
 }
 
+function isCandidate2027(id) {
+    return !!(politicsPeopleById[id] && politicsPeopleById[id].candidat2027);
+}
+
+// Political quotes of the current game mode
+function getActivePoliticsQuotes() {
+    if (gameMode === '2027') {
+        return politicsQuotes.filter(q => isCandidate2027(q.id));
+    }
+    return politicsQuotes;
+}
+
+// A politician can only appear as an option if they belong to the current game mode
+function isAllowedInMode(id) {
+    return gameMode !== '2027' || !isPoliticsId(id) || isCandidate2027(id);
+}
+
 // Function to choose dataset with Bernoulli distribution (75% politics, 25% pop culture)
 function chooseDataset() {
     const random = Math.random();
-    return random < 0.75 ? politicsQuotes : popCultureQuotes;
+    return random < 0.75 ? getActivePoliticsQuotes() : popCultureQuotes;
 }
 
 // Function to get random quote from array
@@ -316,7 +347,7 @@ function getRandomQuote(quotesArray) {
 
 // Function to get all unique ids from both datasets
 function getAllIds() {
-    const politicsIds = politicsQuotes.map(q => q.id).filter(id => id && id.trim() !== '');
+    const politicsIds = getActivePoliticsQuotes().map(q => q.id).filter(id => id && id.trim() !== '');
     const popCultureIds = popCultureQuotes.map(q => q.id).filter(id => id && id.trim() !== '');
     
     return {
@@ -412,7 +443,7 @@ function selectIdsForQuote(quote, isPolitics) {
     let otherIds = [];
 
     // Retire de l'obligation l'id correct et toute interdiction
-    obligationIds = obligationIds.filter(id => id && id !== correctId && !interdictionIdsSet.has(id));
+    obligationIds = obligationIds.filter(id => id && id !== correctId && !interdictionIdsSet.has(id) && isAllowedInMode(id));
 
     if (isPolitics) {
         if (partyConstraint) {
@@ -616,6 +647,7 @@ function loadRandomQuote() {
         // Create the global question object
         currentQuestion = {
             quote: quoteText,
+            quoteData: quote,
             correctId: correctId,
             allIds: [correctId, ...otherIds]
         };
@@ -978,23 +1010,9 @@ function createWhitePlaceholder() {
     return canvas.toDataURL();
 }
 
-// Function to get full quote data by id
-function getFullQuoteData(id) {
-    // Search in politics quotes
-    const politicsMatch = politicsQuotes.find(q => q.id === id);
-    if (politicsMatch) {
-        return politicsMatch;
-    }
-    
-    // Search in pop culture quotes by explicit id
-    const popCultureMatch = popCultureQuotes.find(q => q.id === id);
-    
-    return popCultureMatch || null;
-}
-
 // Function to show info popup
 function showInfoPopup() {
-    const quoteData = getFullQuoteData(currentQuestion.correctId);
+    const quoteData = currentQuestion.quoteData;
     
     if (!quoteData) return;
     

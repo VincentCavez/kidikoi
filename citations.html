@@ -64,7 +64,7 @@
             padding: 10px 12px;
         }
         .filters input[type="search"] { flex: 1 1 260px; min-width: 0; }
-        .filters select { flex: 0 1 220px; min-width: 0; }
+        .filters select { flex: 1 1 200px; min-width: 0; }
         .filters input[type="search"]::placeholder { color: #B8C5CB; }
         .filters input:focus, .filters select:focus { outline: none; border-color: #E28413; }
 
@@ -120,9 +120,55 @@
         .quote-card summary { cursor: pointer; color: #E28413; }
         .quote-card details p { margin-top: 6px; }
 
-        .quote-source { margin-top: 10px; font-size: 0.9rem; overflow-wrap: anywhere; }
+        .quote-footer {
+            margin-top: 10px;
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: space-between;
+            gap: 8px 16px;
+            font-size: 0.9rem;
+        }
+        .quote-source { overflow-wrap: anywhere; }
         .quote-source a { color: #6ee600; }
         .quote-source .missing { color: #DE5A3C; }
+
+        .remove-toggle {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            color: #B8C5CB;
+            cursor: pointer;
+        }
+
+        .quote-card.to-remove { opacity: 0.55; outline: 2px solid #DE5A3C; }
+        .quote-card.to-remove .remove-toggle { color: #DE5A3C; }
+
+        /* Removal bar */
+        .removal-bar {
+            display: flex;
+            flex-wrap: wrap;
+            align-items: center;
+            gap: 10px;
+            background: rgba(222, 90, 60, 0.15);
+            border: 2px solid #DE5A3C;
+            border-radius: 12px;
+            padding: 12px;
+            margin-bottom: 12px;
+        }
+        .removal-bar[hidden] { display: none; }
+        .removal-bar span { font-weight: 600; margin-right: auto; }
+        .removal-bar button {
+            font: inherit;
+            font-weight: 600;
+            color: #000033;
+            background: #E28413;
+            border: none;
+            border-radius: 10px;
+            padding: 8px 14px;
+            cursor: pointer;
+        }
+        .removal-bar button.secondary { background: transparent; color: #B8C5CB; border: 2px solid #4A8D96; }
+        .removal-help { flex-basis: 100%; color: #B8C5CB; font-size: 0.85rem; }
 
         .empty { color: #B8C5CB; text-align: center; padding: 40px 0; }
     </style>
@@ -136,10 +182,24 @@
 
         <div class="filters">
             <input type="search" id="search" placeholder="Rechercher un mot, un nom…" aria-label="Rechercher">
+            <select id="corpus" aria-label="Filtrer par corpus">
+                <option value="">Toutes les citations</option>
+                <option value="2027">Présidentielle 2027</option>
+                <option value="politiques">Tous les politiques</option>
+                <option value="fiction">Fiction</option>
+            </select>
             <select id="person" aria-label="Filtrer par personne">
                 <option value="">Tout le monde</option>
             </select>
             <label><input type="checkbox" id="no-source"> Sans source uniquement</label>
+            <label><input type="checkbox" id="only-removed"> À retirer uniquement</label>
+        </div>
+
+        <div class="removal-bar" id="removal-bar" hidden>
+            <span id="removal-count"></span>
+            <button type="button" id="download-cleaned">Télécharger les CSV sans ces citations</button>
+            <button type="button" id="clear-removals" class="secondary">Tout décocher</button>
+            <p class="removal-help">Remplace ensuite les fichiers du dossier <code>data/spreadsheet/</code> par ceux téléchargés. Les cases cochées sont mémorisées dans ce navigateur uniquement.</p>
         </div>
 
         <p class="count" id="count">Chargement…</p>
