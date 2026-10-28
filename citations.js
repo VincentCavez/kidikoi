@@ -1,18 +1,18 @@
-// Page de consultation de toutes les citations (politiques + fiction)
+// Page de consultation et de validation de toutes les citations (politiques + fiction)
 
 const QUOTE_FILES = [
-    { path: 'data/spreadsheet/politiques_citations.csv', sourceField: 'source_url' },
-    { path: 'data/spreadsheet/personnages_citations.csv', sourceField: 'source' }
+    { key: 'politiques', path: 'data/spreadsheet/politiques_citations.csv', sourceField: 'source_url' },
+    { key: 'personnages', path: 'data/spreadsheet/personnages_citations.csv', sourceField: 'source' }
 ];
-const REMOVED_STORAGE_KEY = 'kidikoi-citations-a-retirer';
+const STATUS_LABELS = { '': 'À valider', valide: 'Validée', refuse: 'Refusée' };
 
 let allQuotes = [];
-let quoteFiles = []; // { path, header, rawLines } pour régénérer les CSV
-let removedKeys = new Set(); // citations cochées « Retirer de la base de données »
 let peopleById = {};
+let canEdit = false; // vrai seulement avec scripts/serveur_validation.py
 
 async function fetchText(path) {
-    const resp = await fetch(path);
+    // no-store : après une validation, on veut le CSV tel qu'il est sur le disque
+    const resp = await fetch(path, { cache: 'no-store' });
     return resp.text();
 }
 
@@ -25,20 +25,13 @@ function normalize(text) {
     return (text || '').normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase();
 }
 
-// Le stockage local peut être indisponible (navigation privée, etc.)
-function loadRemovedKeys() {
+// Le serveur local de validation répond sur /api/ping ; GitHub Pages non
+async function detectEditMode() {
     try {
-        return new Set(JSON.parse(localStorage.getItem(REMOVED_STORAGE_KEY) || '[]'));
+        const resp = await fetch('api/ping', { cache: 'no-store' });
+        return resp.ok && (await resp.json()).ok === true;
     } catch (error) {
-        return new Set();
-    }
-}
-
-function saveRemovedKeys() {
-    try {
-        localStorage.setItem(REMOVED_STORAGE_KEY, JSON.stringify([...removedKeys]));
-    } catch (error) {
-        console.warn('Impossible de mémoriser les citations à retirer :', error);
+        return false;
     }
 }
 
@@ -61,17 +54,16 @@ async function loadQuotes() {
     parseCSV(popPeopleText).forEach(p => { peopleById[p.id] = { name: fullName(p), sortKey: p.nom || p.prenom, group: 'Fiction' }; });
 
     allQuotes = [];
-    quoteFiles = QUOTE_FILES.map((file, fileIndex) => {
+    QUOTE_FILES.forEach((file, fileIndex) => {
         const [header, ...rawLines] = quoteTexts[fileIndex].trim().split('\n');
-        // Chaque ligne est parsée seule pour garder le lien avec sa ligne brute
-        rawLines.forEach(line => {
+        // Chaque ligne est parsée seule pour connaître son numéro de ligne dans le fichier
+        rawLines.forEach((line, index) => {
             const q = parseCSV(`${header}\n${line}`)[0];
             if (!q || !q.citation_courte) return;
             const person = peopleById[q.id] || { name: q.id, sortKey: q.id, group: '' };
             allQuotes.push({
-                key: `${file.path}|${q.id}|${q.citation_courte}`,
-                file: file.path,
-                rawLine: line,
+                file: file.key,
+                line: index + 1,
                 id: q.id,
                 author: person.name,
                 sortKey: person.sortKey,
@@ -80,20 +72,17 @@ async function loadQuotes() {
                 text: q.citation_courte,
                 context: q.contexte_complet,
                 date: q.date,
-                source: q[file.sourceField] || ''
+                source: q[file.sourceField] || '',
+                sourceText: (q.source_texte || '').trim(),
+                status: (q.statut || '').trim()
             });
         });
-        return { path: file.path, header, rawLines };
     });
 
     allQuotes.forEach(q => {
         q.searchText = normalize([q.text, q.author, q.context, q.date].join(' '));
     });
     allQuotes.sort((a, b) => a.sortKey.localeCompare(b.sortKey, 'fr'));
-
-    // Oublie les clés de citations qui n'existent plus dans les CSV
-    const existingKeys = new Set(allQuotes.map(q => q.key));
-    removedKeys = new Set([...loadRemovedKeys()].filter(k => existingKeys.has(k)));
 
     fillPersonSelect();
 }
@@ -135,10 +124,27 @@ function hasUrl(source) {
     return /^https?:\/\//.test(source);
 }
 
+// Enregistre le statut dans le CSV via le serveur local
+async function saveStatus(q, status, card) {
+    const resp = await fetch('api/statut', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ fichier: q.file, ligne: q.line, citation: q.text, statut: status })
+    });
+    const result = await resp.json().catch(() => ({}));
+    if (!resp.ok) {
+        alert(`Statut non enregistré : ${result.erreur || resp.status}`);
+        return;
+    }
+    q.status = status;
+    card.replaceWith(renderQuote(q));
+    updateProgress();
+}
+
 function renderQuote(q) {
     const card = document.createElement('article');
     card.className = 'quote-card';
-    card.classList.toggle('to-remove', removedKeys.has(q.key));
+    if (q.status) card.classList.add(`status-${q.status}`);
 
     // Avatar illustré en priorité, puis la photo, puis l'image par défaut
     const imagePaths = [`data/avatars/${q.id}.jpg`, `data/photos/${q.id}.jpg`, `data/photos/${q.id}.png`, 'data/photos/default.jpg'];
@@ -158,10 +164,11 @@ function renderQuote(q) {
 
     const meta = document.createElement('div');
     meta.className = 'quote-meta';
-    meta.innerHTML = '<span class="quote-author"></span><span class="quote-date"></span><span class="quote-tag"></span>';
+    meta.innerHTML = '<span class="quote-author"></span><span class="quote-date"></span><span class="quote-tag"></span><span class="status-badge"></span>';
     meta.querySelector('.quote-author').textContent = q.author;
     meta.querySelector('.quote-date').textContent = q.date;
     meta.querySelector('.quote-tag').textContent = q.candidat2027 ? 'Présidentielle 2027' : q.group;
+    meta.querySelector('.status-badge').textContent = STATUS_LABELS[q.status] || q.status;
     body.appendChild(meta);
 
     const text = document.createElement('p');
@@ -186,7 +193,9 @@ function renderQuote(q) {
         link.href = q.source;
         link.target = '_blank';
         link.rel = 'noopener noreferrer';
-        link.textContent = new URL(q.source).hostname.replace(/^www\./, '');
+        const site = new URL(q.source).hostname.replace(/^www\./, '');
+        // Référence d'origine (émission, média, date) quand on la connaît, sinon le nom du site
+        link.textContent = q.sourceText ? `${q.sourceText} (${site})` : site;
         source.append('Source : ', link);
     } else if (q.source) {
         source.textContent = `Source : ${q.source}`;
@@ -195,20 +204,21 @@ function renderQuote(q) {
     }
     footer.appendChild(source);
 
-    const removeLabel = document.createElement('label');
-    removeLabel.className = 'remove-toggle';
-    const removeBox = document.createElement('input');
-    removeBox.type = 'checkbox';
-    removeBox.checked = removedKeys.has(q.key);
-    removeBox.addEventListener('change', () => {
-        if (removeBox.checked) removedKeys.add(q.key);
-        else removedKeys.delete(q.key);
-        saveRemovedKeys();
-        card.classList.toggle('to-remove', removeBox.checked);
-        updateRemovalBar();
-    });
-    removeLabel.append(removeBox, ' Retirer de la base de données');
-    footer.appendChild(removeLabel);
+    if (canEdit) {
+        const actions = document.createElement('div');
+        actions.className = 'review-actions';
+        [['valide', '✓ Valider'], ['refuse', '✕ Refuser']].forEach(([status, label]) => {
+            const button = document.createElement('button');
+            button.type = 'button';
+            button.className = `review-button ${status}`;
+            button.textContent = label;
+            button.setAttribute('aria-pressed', String(q.status === status));
+            // Recliquer sur le statut actif remet la citation « à valider »
+            button.addEventListener('click', () => saveStatus(q, q.status === status ? '' : status, card));
+            actions.appendChild(button);
+        });
+        footer.appendChild(actions);
+    }
 
     body.appendChild(footer);
     card.appendChild(body);
@@ -219,14 +229,14 @@ function applyFilters() {
     const terms = normalize(document.getElementById('search').value).split(/\s+/).filter(Boolean);
     const corpus = document.getElementById('corpus').value;
     const personId = document.getElementById('person').value;
+    const status = document.getElementById('status').value;
     const onlyMissing = document.getElementById('no-source').checked;
-    const onlyRemoved = document.getElementById('only-removed').checked;
 
     const results = allQuotes.filter(q =>
         matchesCorpus(q, corpus) &&
         (!personId || q.id === personId) &&
+        (status === 'tous' || q.status === status) &&
         (!onlyMissing || !q.source) &&
-        (!onlyRemoved || removedKeys.has(q.key)) &&
         terms.every(t => q.searchText.includes(t))
     );
 
@@ -239,54 +249,29 @@ function applyFilters() {
         `${results.length} citation${results.length > 1 ? 's' : ''} sur ${allQuotes.length}`;
 }
 
-function updateRemovalBar() {
-    const n = removedKeys.size;
-    document.getElementById('removal-bar').hidden = n === 0;
-    document.getElementById('removal-count').textContent =
-        `${n} citation${n > 1 ? 's' : ''} à retirer`;
-}
-
-// Télécharge chaque CSV concerné, sans les lignes cochées
-function downloadCleanedCSVs() {
-    const removedLines = new Set(allQuotes.filter(q => removedKeys.has(q.key)).map(q => `${q.file}\n${q.rawLine}`));
-    quoteFiles.forEach(file => {
-        const kept = file.rawLines.filter(line => !removedLines.has(`${file.path}\n${line}`));
-        if (kept.length === file.rawLines.length) return;
-        const blob = new Blob([[file.header, ...kept].join('\n') + '\n'], { type: 'text/csv;charset=utf-8' });
-        const link = document.createElement('a');
-        link.href = URL.createObjectURL(blob);
-        link.download = file.path.split('/').pop();
-        document.body.appendChild(link);
-        link.click();
-        link.remove();
-        setTimeout(() => URL.revokeObjectURL(link.href), 1000);
-    });
-}
-
-function clearRemovals() {
-    removedKeys.clear();
-    saveRemovedKeys();
-    updateRemovalBar();
-    applyFilters();
+function updateProgress() {
+    const count = status => allQuotes.filter(q => q.status === status).length;
+    document.getElementById('progress').textContent =
+        `${count('valide')} validées · ${count('refuse')} refusées · ${count('')} à valider`;
 }
 
 document.addEventListener('DOMContentLoaded', async () => {
     try {
-        await loadQuotes();
+        [canEdit] = await Promise.all([detectEditMode(), loadQuotes()]);
     } catch (error) {
         console.error('Error loading CSV data:', error);
         document.getElementById('count').textContent = 'Impossible de charger les citations.';
         return;
     }
-    ['search', 'person', 'no-source', 'only-removed'].forEach(id => {
+    document.getElementById('read-only-help').hidden = canEdit;
+    if (!canEdit) document.getElementById('status').value = 'tous';
+    ['search', 'person', 'status', 'no-source'].forEach(id => {
         document.getElementById(id).addEventListener('input', applyFilters);
     });
     document.getElementById('corpus').addEventListener('input', () => {
         fillPersonSelect();
         applyFilters();
     });
-    document.getElementById('download-cleaned').addEventListener('click', downloadCleanedCSVs);
-    document.getElementById('clear-removals').addEventListener('click', clearRemovals);
-    updateRemovalBar();
+    updateProgress();
     applyFilters();
 });

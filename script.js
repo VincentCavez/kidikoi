@@ -259,6 +259,10 @@ function handleImageClick(event) {
     }, 1500);
 }
 
+function isPlayable(quote) {
+    return (quote.statut || '').trim() !== 'refuse';
+}
+
 // Function to load CSV data
 async function loadCSVData() {
     try {
@@ -272,7 +276,8 @@ async function loadCSVData() {
             polQuotesResp.text()
         ]);
         const politicsPeople = parseCSV(polPeopleText);
-        politicsQuotes = parseCSV(polQuotesText);
+        // Les citations refusées restent dans le CSV (pour ne pas être reproposées) mais pas dans le jeu
+        politicsQuotes = parseCSV(polQuotesText).filter(isPlayable);
         politicsPeopleById = {};
         politicsPeople.forEach(p => {
             const pid = (p.id || '').trim();
@@ -296,7 +301,7 @@ async function loadCSVData() {
             popQuotesResp.text()
         ]);
         const popPeople = parseCSV(popPeopleText);
-        popCultureQuotes = parseCSV(popQuotesText);
+        popCultureQuotes = parseCSV(popQuotesText).filter(isPlayable);
         popCulturePeopleById = {};
         popPeople.forEach(p => {
             const pid = (p.id || '').trim();
@@ -1031,13 +1036,20 @@ function showInfoPopup() {
     document.getElementById('popup-context').textContent = quoteData.contexte_complet || 'Non renseigné';
     
     const rawLink = quoteData.source_url || quoteData.source || '';
+    const sourceText = (quoteData.source_texte || '').trim();
     const linkElement = document.getElementById('popup-link');
+    const sourceTextElement = document.getElementById('popup-source-text');
     const isUrl = /^https?:\/\//i.test(rawLink);
     if (isUrl) {
+        // Référence d'origine (émission, média, date) en texte du lien, sinon le nom du site
         linkElement.href = rawLink;
+        linkElement.textContent = sourceText || new URL(rawLink).hostname.replace(/^www\./, '');
         linkElement.style.display = 'inline';
+        sourceTextElement.textContent = '';
     } else {
+        // Personnages de fiction : la source est le titre de l'œuvre
         linkElement.style.display = 'none';
+        sourceTextElement.textContent = sourceText || rawLink || 'Non renseignée';
     }
     
     // Show popup

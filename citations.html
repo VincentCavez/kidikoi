@@ -178,41 +178,44 @@
         .quote-source a:hover { color: var(--rouge); }
         .quote-source .missing { color: var(--rouge); }
 
-        .remove-toggle {
-            display: flex;
-            align-items: center;
-            gap: 6px;
-            color: var(--gris);
-            cursor: pointer;
-        }
-
-        .quote-card.to-remove { opacity: 0.55; border-color: var(--rouge); }
-        .quote-card.to-remove .remove-toggle { color: var(--rouge); }
-
-        /* Removal bar */
-        .removal-bar {
-            display: flex;
-            flex-wrap: wrap;
-            align-items: center;
-            gap: 10px;
-            background: #FBE7E8;
-            border: 3px solid var(--rouge);
-            padding: 12px;
-            margin-top: 12px;
-        }
-        .removal-bar[hidden] { display: none; }
-        .removal-bar span { font-family: var(--titre); font-size: 1.2rem; text-transform: uppercase; margin-right: auto; }
-        .removal-bar button {
+        /* Validation */
+        .review-actions { display: flex; gap: 8px; }
+        .review-button {
             font: inherit;
             font-weight: 800;
-            color: var(--blanc);
-            background: var(--rouge);
-            border: none;
-            padding: 10px 14px;
+            font-size: 0.85rem;
+            padding: 8px 12px;
+            background: var(--blanc);
+            border: 2px solid var(--encre);
+            color: var(--encre);
             cursor: pointer;
         }
-        .removal-bar button.secondary { background: transparent; color: var(--encre); border: 2px solid var(--encre); }
-        .removal-help { flex-basis: 100%; color: var(--encre); font-size: 0.85rem; }
+        .review-button.valide:hover, .review-button.valide[aria-pressed="true"] { background: #1E8E3E; border-color: #1E8E3E; color: var(--blanc); }
+        .review-button.refuse:hover, .review-button.refuse[aria-pressed="true"] { background: var(--rouge); border-color: var(--rouge); color: var(--blanc); }
+
+        .status-badge {
+            font-size: 0.75rem;
+            font-weight: 800;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            padding: 1px 6px;
+            border: 2px solid var(--gris);
+            color: var(--gris);
+        }
+        .quote-card.status-valide { border-color: #1E8E3E; }
+        .quote-card.status-valide .status-badge { border-color: #1E8E3E; color: #1E8E3E; }
+        .quote-card.status-refuse { opacity: 0.6; border-color: var(--rouge); }
+        .quote-card.status-refuse .status-badge { border-color: var(--rouge); color: var(--rouge); }
+
+        .progress { font-weight: 800; margin-top: 12px; }
+        .read-only-help {
+            background: #E6EAF5;
+            border: 2px solid var(--bleu);
+            padding: 10px 12px;
+            margin-top: 12px;
+            font-size: 0.9rem;
+        }
+        .read-only-help[hidden] { display: none; }
 
         .empty { color: var(--gris); text-align: center; padding: 40px 0; font-weight: 700; }
     </style>
@@ -235,16 +238,17 @@
             <select id="person" aria-label="Filtrer par personne">
                 <option value="">Tout le monde</option>
             </select>
+            <select id="status" aria-label="Filtrer par statut">
+                <option value="">À valider</option>
+                <option value="valide">Validées</option>
+                <option value="refuse">Refusées</option>
+                <option value="tous">Tous les statuts</option>
+            </select>
             <label><input type="checkbox" id="no-source"> Sans source uniquement</label>
-            <label><input type="checkbox" id="only-removed"> À retirer uniquement</label>
         </div>
 
-        <div class="removal-bar" id="removal-bar" hidden>
-            <span id="removal-count"></span>
-            <button type="button" id="download-cleaned">Télécharger les CSV sans ces citations</button>
-            <button type="button" id="clear-removals" class="secondary">Tout décocher</button>
-            <p class="removal-help">Remplace ensuite les fichiers du dossier <code>data/spreadsheet/</code> par ceux téléchargés. Les cases cochées sont mémorisées dans ce navigateur uniquement.</p>
-        </div>
+        <p class="progress" id="progress"></p>
+        <p class="read-only-help" id="read-only-help" hidden>Lecture seule. Pour valider ou refuser des citations, lance <code>python3 scripts/serveur_validation.py</code> puis ouvre <code>http://localhost:8000/citations.html</code>.</p>
 
         <p class="count" id="count">Chargement…</p>
         <div class="quote-list" id="quote-list"></div>
