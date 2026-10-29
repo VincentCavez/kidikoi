@@ -10,6 +10,7 @@ Il ne reste ensuite qu'à commiter les CSV.
 """
 import argparse
 import csv
+import errno
 import json
 import os
 import tempfile
@@ -92,7 +93,14 @@ def main():
     parser = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     parser.add_argument('--port', type=int, default=8000, help='port local (défaut : 8000)')
     args = parser.parse_args()
-    server = ThreadingHTTPServer(('127.0.0.1', args.port), partial(Handler, directory=str(ROOT)))
+    try:
+        server = ThreadingHTTPServer(('127.0.0.1', args.port), partial(Handler, directory=str(ROOT)))
+    except OSError as error:
+        if error.errno != errno.EADDRINUSE:
+            raise
+        raise SystemExit(f'Le port {args.port} est déjà utilisé : le serveur tourne peut-être déjà, '
+                         f'ouvre http://localhost:{args.port}/citations.html. '
+                         f'Sinon, choisis un autre port avec --port 8001.')
     print(f'Validation des citations : http://localhost:{args.port}/citations.html  (Ctrl+C pour arrêter)')
     try:
         server.serve_forever()

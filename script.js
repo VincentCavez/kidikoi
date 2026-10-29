@@ -337,17 +337,57 @@ function isAllowedInMode(id) {
     return gameMode !== '2027' || !isPoliticsId(id) || isCandidate2027(id);
 }
 
-// Function to choose dataset with Bernoulli distribution (75% politics, 25% pop culture)
-function chooseDataset() {
-    const random = Math.random();
-    return random < 0.75 ? getActivePoliticsQuotes() : popCultureQuotes;
+// Quotes already asked in the current game (no repetition within a game)
+let usedQuotes = new Set();
+
+function pickRandom(arr) {
+    return arr[Math.floor(Math.random() * arr.length)];
 }
 
-// Function to get random quote from array
-function getRandomQuote(quotesArray) {
-    if (quotesArray.length === 0) return null;
-    const randomIndex = Math.floor(Math.random() * quotesArray.length);
-    return quotesArray[randomIndex];
+// Balanced political draw: camp first (left and right equally likely, centre and
+// no-camp at their natural share), then a random person in that camp, then one of
+// their quotes not yet asked. Every politician gets the same chance, whatever
+// their number of quotes.
+function pickPoliticsQuote() {
+    const pool = getActivePoliticsQuotes();
+    const available = pool.filter(q => !usedQuotes.has(q));
+    if (available.length === 0) return null;
+
+    const campOf = q => getPartyForId(q.id) || '';
+    const share = camp => pool.filter(q => campOf(q) === camp).length / pool.length;
+    const weights = { centre: share('centre'), '': share('') };
+    weights.gauche = weights.droite = (1 - weights.centre - weights['']) / 2;
+
+    const byCamp = {};
+    available.forEach(q => { (byCamp[campOf(q)] = byCamp[campOf(q)] || []).push(q); });
+    const camps = Object.keys(byCamp);
+    const totalWeight = camps.reduce((sum, c) => sum + (weights[c] || 0), 0);
+    let camp = pickRandom(camps);
+    if (totalWeight > 0) {
+        let r = Math.random() * totalWeight;
+        for (const c of camps) {
+            r -= weights[c] || 0;
+            if (r < 0) { camp = c; break; }
+        }
+    }
+
+    const person = pickRandom([...new Set(byCamp[camp].map(q => q.id))]);
+    return pickRandom(byCamp[camp].filter(q => q.id === person));
+}
+
+function pickPopCultureQuote() {
+    const available = popCultureQuotes.filter(q => !usedQuotes.has(q));
+    return available.length > 0 ? pickRandom(available) : null;
+}
+
+// 75% politics, 25% pop culture; falls back to the other dataset if one runs out
+function pickQuote() {
+    const politicsFirst = Math.random() < 0.75;
+    const quote = politicsFirst
+        ? pickPoliticsQuote() || pickPopCultureQuote()
+        : pickPopCultureQuote() || pickPoliticsQuote();
+    if (quote) usedQuotes.add(quote);
+    return quote;
 }
 
 // Function to get all unique ids from both datasets
@@ -633,8 +673,9 @@ function loadRandomQuote() {
         return;
     }
     
-    const dataset = chooseDataset();
-    const quote = getRandomQuote(dataset);
+    // New game: every quote can be asked again
+    if (currentRound === 0) usedQuotes.clear();
+    const quote = pickQuote();
     
     if (quote) {
         const quoteText = quote.citation_courte || quote.contexte_complet || 'Citation non disponible';
