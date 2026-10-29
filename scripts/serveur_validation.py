@@ -2,7 +2,8 @@
 
 Le site publié sur GitHub Pages est statique et ne peut pas modifier les CSV. Ce serveur sert le
 site sur ta machine et enregistre chaque clic « Valider » / « Refuser » directement dans la
-colonne `statut` du fichier de citations (vide = à valider, `valide`, `refuse`).
+colonne `statut` du fichier de citations (vide = à valider, `valide`, `favori` = validée et jouée
+en priorité, `refuse`).
 Il ne reste ensuite qu'à commiter les CSV.
 
   python3 scripts/serveur_validation.py          # puis ouvrir http://localhost:8000/citations.html
@@ -23,7 +24,7 @@ QUOTE_FILES = {
     'politiques': ROOT / 'data' / 'spreadsheet' / 'politiques_citations.csv',
     'personnages': ROOT / 'data' / 'spreadsheet' / 'personnages_citations.csv',
 }
-STATUSES = {'', 'valide', 'refuse'}
+STATUSES = {'', 'valide', 'favori', 'refuse'}
 
 
 def set_status(file_key, line_number, citation, status):

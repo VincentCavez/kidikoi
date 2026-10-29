@@ -4,7 +4,14 @@ const QUOTE_FILES = [
     { key: 'politiques', path: 'data/spreadsheet/politiques_citations.csv', sourceField: 'source_url' },
     { key: 'personnages', path: 'data/spreadsheet/personnages_citations.csv', sourceField: 'source' }
 ];
-const STATUS_LABELS = { '': 'À valider', valide: 'Validée', refuse: 'Refusée' };
+const STATUS_LABELS = { '': 'À valider', valide: 'Validée', favori: '★ Favorite', refuse: 'Refusée' };
+
+// Une favorite est une validée que le jeu pose en priorité
+function matchesStatus(q, status) {
+    if (status === 'tous') return true;
+    if (status === 'valide') return q.status === 'valide' || q.status === 'favori';
+    return q.status === status;
+}
 
 let allQuotes = [];
 let peopleById = {};
@@ -207,14 +214,15 @@ function renderQuote(q) {
     if (canEdit) {
         const actions = document.createElement('div');
         actions.className = 'review-actions';
-        [['valide', '✓ Valider'], ['refuse', '✕ Refuser']].forEach(([status, label]) => {
+        [['favori', '★ Favorite'], ['valide', '✓ Valider'], ['refuse', '✕ Refuser']].forEach(([status, label]) => {
             const button = document.createElement('button');
             button.type = 'button';
             button.className = `review-button ${status}`;
             button.textContent = label;
             button.setAttribute('aria-pressed', String(q.status === status));
-            // Recliquer sur le statut actif remet la citation « à valider »
-            button.addEventListener('click', () => saveStatus(q, q.status === status ? '' : status, card));
+            // Recliquer sur le statut actif remet la citation « à valider » (une favorite redevient simple validée)
+            const undo = status === 'favori' ? 'valide' : '';
+            button.addEventListener('click', () => saveStatus(q, q.status === status ? undo : status, card));
             actions.appendChild(button);
         });
         footer.appendChild(actions);
@@ -235,7 +243,7 @@ function applyFilters() {
     const results = allQuotes.filter(q =>
         matchesCorpus(q, corpus) &&
         (!personId || q.id === personId) &&
-        (status === 'tous' || q.status === status) &&
+        matchesStatus(q, status) &&
         (!onlyMissing || !q.source) &&
         terms.every(t => q.searchText.includes(t))
     );
@@ -252,7 +260,7 @@ function applyFilters() {
 function updateProgress() {
     const count = status => allQuotes.filter(q => q.status === status).length;
     document.getElementById('progress').textContent =
-        `${count('valide')} validées · ${count('refuse')} refusées · ${count('')} à valider`;
+        `${count('valide') + count('favori')} validées dont ${count('favori')} favorites · ${count('refuse')} refusées · ${count('')} à valider`;
 }
 
 document.addEventListener('DOMContentLoaded', async () => {

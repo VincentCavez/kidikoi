@@ -261,7 +261,17 @@ function handleImageClick(event) {
 
 // Only quotes validated by hand reach the game (not the refused ones, nor those still to review)
 function isPlayable(quote) {
-    return (quote.statut || '').trim() === 'valide';
+    return ['valide', 'favori'].includes((quote.statut || '').trim());
+}
+
+// Quotes starred as favourites are validated too, and asked first
+function isFavorite(quote) {
+    return (quote.statut || '').trim() === 'favori';
+}
+
+function preferFavorites(quotes) {
+    const favorites = quotes.filter(isFavorite);
+    return favorites.length > 0 ? favorites : quotes;
 }
 
 // Function to load CSV data
@@ -372,13 +382,15 @@ function pickPoliticsQuote() {
         }
     }
 
-    const person = pickRandom([...new Set(byCamp[camp].map(q => q.id))]);
-    return pickRandom(byCamp[camp].filter(q => q.id === person));
+    // Within the drawn camp, unused favourites come before the other quotes
+    const inCamp = preferFavorites(byCamp[camp]);
+    const person = pickRandom([...new Set(inCamp.map(q => q.id))]);
+    return pickRandom(inCamp.filter(q => q.id === person));
 }
 
 function pickPopCultureQuote() {
     const available = popCultureQuotes.filter(q => !usedQuotes.has(q));
-    return available.length > 0 ? pickRandom(available) : null;
+    return available.length > 0 ? pickRandom(preferFavorites(available)) : null;
 }
 
 // 75% politics, 25% pop culture; falls back to the other dataset if one runs out

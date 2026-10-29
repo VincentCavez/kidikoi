@@ -192,6 +192,7 @@
         }
         .review-button.valide:hover, .review-button.valide[aria-pressed="true"] { background: #1E8E3E; border-color: #1E8E3E; color: var(--blanc); }
         .review-button.refuse:hover, .review-button.refuse[aria-pressed="true"] { background: var(--rouge); border-color: var(--rouge); color: var(--blanc); }
+        .review-button.favori:hover, .review-button.favori[aria-pressed="true"] { background: #E8A200; border-color: #E8A200; color: var(--encre); }
 
         .status-badge {
             font-size: 0.75rem;
@@ -204,6 +205,8 @@
         }
         .quote-card.status-valide { border-color: #1E8E3E; }
         .quote-card.status-valide .status-badge { border-color: #1E8E3E; color: #1E8E3E; }
+        .quote-card.status-favori { border-color: #E8A200; box-shadow: 4px 4px 0 #E8A200; }
+        .quote-card.status-favori .status-badge { border-color: #E8A200; background: #E8A200; color: var(--encre); }
         .quote-card.status-refuse { opacity: 0.6; border-color: var(--rouge); }
         .quote-card.status-refuse .status-badge { border-color: var(--rouge); color: var(--rouge); }
 
@@ -241,6 +244,7 @@
             <select id="status" aria-label="Filtrer par statut">
                 <option value="">À valider</option>
                 <option value="valide">Validées</option>
+                <option value="favori">Favorites</option>
                 <option value="refuse">Refusées</option>
                 <option value="tous">Tous les statuts</option>
             </select>
