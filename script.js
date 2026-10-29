@@ -259,8 +259,9 @@ function handleImageClick(event) {
     }, 1500);
 }
 
+// Only quotes validated by hand reach the game (not the refused ones, nor those still to review)
 function isPlayable(quote) {
-    return (quote.statut || '').trim() !== 'refuse';
+    return (quote.statut || '').trim() === 'valide';
 }
 
 // Function to load CSV data
@@ -276,7 +277,7 @@ async function loadCSVData() {
             polQuotesResp.text()
         ]);
         const politicsPeople = parseCSV(polPeopleText);
-        // Les citations refusées restent dans le CSV (pour ne pas être reproposées) mais pas dans le jeu
+        // Refused quotes stay in the CSV (so they are never proposed again) but not in the game
         politicsQuotes = parseCSV(polQuotesText).filter(isPlayable);
         politicsPeopleById = {};
         politicsPeople.forEach(p => {
